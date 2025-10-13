@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -147,9 +148,9 @@
 </head>
 <body>
 
-<div id="map-title">Geoportal de muestra</div>
+<div id="map-title">Portal de representación de shapes</div>
 <div id="map"></div>
-<div class="custom-attribution">Hecho con <a href="https://leafletjs.com/" target="_blank">Leaflet</a> | Elaborado por Gabriela Reséndiz Colorado | Exclusivamente con Fines Académicos</div>
+<div class="custom-attribution">Hecho con <a href="https://leafletjs.com/" target="_blank">Leaflet</a> | Elaborado por Gabriela Reséndiz Colorado|Uso exclusivo con Fines Académicos</div>
 
 
 <script>
@@ -390,134 +391,4 @@
         };
 
         if (extension === 'zip') {
-            reader.readAsArrayBuffer(file);
-        } else {
-            reader.readAsText(file);
-        }
-    }
-    
-    L.Control.Custom = L.Control.extend({
-        onAdd: function(map) {
-            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control custom-control');
-            container.innerText = 'Cargar Archivo(s)';
-            const fileInput = L.DomUtil.create('input', 'hidden');
-            fileInput.type = 'file'; 
-            fileInput.accept = ".geojson,.json,.zip"; 
-            fileInput.multiple = true;
-            container.appendChild(fileInput);
-
-            fileInput.onchange = (e) => { 
-                if (!e.target.files) return; 
-                for (const file of e.target.files) { 
-                    handleUploadedFile(file); 
-                } 
-                e.target.value = '';
-            };
-            
-            L.DomEvent.on(container, 'click', (e) => { L.DomEvent.stopPropagation(e); fileInput.click(); });
-            return container;
-        }
-    });
-    new L.Control.Custom({ position: 'topleft' }).addTo(map);
-
-    function exportMap() {
-        const controlsToHide = document.querySelectorAll(
-            '.leaflet-control-container > .leaflet-top, ' +
-            '.leaflet-control-container > .leaflet-bottom-left, ' +
-            '.info.leaflet-control, ' + 
-            '#map-title'
-        );
-        controlsToHide.forEach(el => el.classList.add('hide-for-export'));
-
-        leafletImage(map, function(err, canvas) {
-            controlsToHide.forEach(el => el.classList.remove('hide-for-export'));
-            if (err) {
-                console.error("Error al exportar el mapa con leaflet-image:", err);
-                alert("Hubo un error al exportar el mapa. Por favor, inténtelo de nuevo.");
-            } else {
-                const link = document.createElement('a');
-                link.download = 'mapa_exportado.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            }
-        });
-    }
-
-    L.Control.Export = L.Control.extend({
-        onAdd: function(map) {
-            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control custom-control');
-            container.innerText = 'Exportar Imagen';
-            L.DomEvent.on(container, 'click', function(e) { L.DomEvent.stopPropagation(e); exportMap(); });
-            return container;
-        }
-    });
-    new L.Control.Export({ position: 'topleft' }).addTo(map);
-
-    const drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
-
-    const drawControl = new L.Control.Draw({
-        edit: {
-            featureGroup: drawnItems,
-            remove: true
-        },
-        draw: {
-            polygon: {
-                allowIntersection: false,
-                showArea: true
-            },
-            polyline: true,
-            rectangle: true,
-            circle: false,
-            marker: false
-        }
-    });
-    map.addControl(drawControl);
-
-    map.on(L.Draw.Event.CREATED, function (e) {
-        const layer = e.layer;
-        const type = e.layerType;
-        let content = '';
-
-        if (type === 'polyline') {
-            let distance = 0;
-            const latlngs = layer.getLatLngs();
-            for (let i = 0; i < latlngs.length - 1; i++) {
-                distance += latlngs[i].distanceTo(latlngs[i+1]);
-            }
-            content = `Distancia: ${ (distance / 1000).toFixed(2) } km`;
-        } else if (type === 'polygon' || type === 'rectangle') {
-            const area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
-            content = `Área: ${ (area / 10000).toFixed(2) } hectáreas`;
-        }
-        
-        if (content) {
-            layer.bindPopup(content).openPopup();
-        }
-        
-        drawnItems.addLayer(layer);
-        
-        drawnItemsHistory.push(layer); 
-    });
-
-    function undoLastDrawAction() {
-        if (drawnItemsHistory.length > 0) {
-            const lastDrawnLayer = drawnItemsHistory.pop();
-            if (drawnItems.hasLayer(lastDrawnLayer)) {
-                drawnItems.removeLayer(lastDrawnLayer);
-            }
-        }
-    }
-
-    document.addEventListener('keydown', function(event) {
-        if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
-            const isInputTarget = event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA';
-            if (!isInputTarget) {
-                event.preventDefault();
-                undoLastDrawAction();
-            }
-        }
-    });
-</script>
-</body>
-</html>
+            reader.readAsArray
