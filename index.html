@@ -149,7 +149,7 @@
 
 <div id="map-title">Geoportal de muestra</div>
 <div id="map"></div>
-<div class="custom-attribution">Hecho con <a href="https://leafletjs.com/" target="_blank">Leaflet</a> | Elaborado por Gabriela Reséndiz C. |Exclusivo para Fines Académicos</div>
+<div class="custom-attribution">Hecho con <a href="https://leafletjs.com/" target="_blank">Leaflet</a> | Elaborado por [Tu Nombre] | Fines Académicos</div>
 
 
 <script>
@@ -164,13 +164,13 @@
     let orderedLayers = [];
     
     // --- CAPAS BASE ---
-    const streets = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { 
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     });
     const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
     });
-    const baseMaps = { "Mapa Claro": streets, "Satélite": satellite };
+    const baseMaps = { "Calles": streets, "Satélite": satellite };
     streets.addTo(map);
     
     // --- CONTROL DE CAPAS ---
@@ -405,7 +405,7 @@
             fileInput.type = 'file';
             fileInput.accept = ".geojson,.json,.zip";
             fileInput.multiple = true;
-            fileInput.style.display = 'none'; // Se oculta el input de forma segura
+            fileInput.style.display = 'none';
 
             container.appendChild(fileInput);
 
@@ -414,13 +414,12 @@
                 for (const file of e.target.files) {
                     handleUploadedFile(file);
                 }
-                e.target.value = ''; // Limpiar para poder cargar el mismo archivo de nuevo
+                e.target.value = '';
             };
             
             L.DomEvent.on(container, 'click', (e) => {
                 L.DomEvent.stopPropagation(e);
-                L.DomEvent.preventDefault(e);
-                fileInput.click(); // Activar el input oculto
+                fileInput.click();
             });
             return container;
         }
