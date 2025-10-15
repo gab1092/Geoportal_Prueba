@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Visualizador muestra</title>
+    <title>Visualizador</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
@@ -34,6 +34,7 @@
             font-family: 'Roboto', sans-serif;
         }
 
+        
         .leaflet-bar, .info, .leaflet-control-layers {
             background-color: white;
             border-radius: 8px !important;
@@ -55,6 +56,7 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 14px rgba(0,0,0,0.1);
         }
+        
         
         .info { 
             padding: 10px 15px; 
@@ -107,6 +109,7 @@
             height: 35px;
         }
 
+        
         .layer-list li {
             border-radius: 4px;
             margin-bottom: 5px;
@@ -118,6 +121,7 @@
             border-left: 4px solid #007bff;
             padding-left: 10px;
         }
+        
         
         #map-title {
             position: absolute;
@@ -137,6 +141,7 @@
             margin-top: 10px;
         }
 
+        
         .custom-attribution {
             position: absolute;
             bottom: 0;
@@ -152,19 +157,22 @@
 </head>
 <body>
 
-<div id="map-title">Geoportal de muestra</div>
+<div id="map-title">Visualizador</div>
 <div id="map"></div>
-<div class="custom-attribution">Hecho con <a href="https://leafletjs.com/" target="_blank">Leaflet</a> | Elaborado por GRC | Uso exclusivo para fines académicos</div>
+<div class="custom-attribution">Hecho con <a href="https://leafletjs.com/" target="_blank">Leaflet</a> | Elaborado por GRC| Exclusivo para fines académicos</div>
 
 
 <script>
+    
     const map = L.map('map', { 
         attributionControl: false, 
         preferCanvas: true 
     }).setView([24.5, -99.5], 5); 
 
+    
     let currentActiveLayer = null;
     let orderedLayers = [];
+    
     
     const oceanBasemap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri'
@@ -179,16 +187,19 @@
     const baseMaps = { "Océano": oceanBasemap, "Calles": streets, "Satélite": satellite };
     oceanBasemap.addTo(map); 
     
+    
     const layerControl = L.control.layers(baseMaps, {}, { 
         collapsed: true,
         position: 'topright' 
     }).addTo(map);
 
+    
     L.control.attribution({ 
         position: 'bottomleft', 
         prefix: false 
     }).addTo(map);
 
+    
     L.graticule().addTo(map);
     
     const infoControl = L.control();
@@ -357,22 +368,19 @@
     function applyLayerOrder() { orderedLayers.forEach(layer => layer.bringToFront()); }
     map.on('overlayadd', e => { const index = orderedLayers.findIndex(l => L.stamp(l) === L.stamp(e.layer)); if (index === -1) { orderedLayers.unshift(e.layer); } if (!currentActiveLayer) { currentActiveLayer = e.layer; } applyLayerOrder(); infoControl.update(); legendControl.update(currentActiveLayer); });
     map.on('overlayremove', e => { const layerIdToRemove = L.stamp(e.layer); orderedLayers = orderedLayers.filter(layer => L.stamp(layer) !== layerIdToRemove); if (e.layer === currentActiveLayer) { currentActiveLayer = orderedLayers.length > 0 ? orderedLayers[0] : null; } infoControl.update(); legendControl.update(currentActiveLayer); });
+    
     function handleUploadedFile(file) {
         if (!file) return;
         const extension = file.name.split('.').pop().toLowerCase();
         const reader = new FileReader();
-
         const loadingMessage = L.DomUtil.create('div', 'loading-indicator', map.getContainer());
         loadingMessage.innerText = `Cargando ${file.name}...`;
-
         reader.onload = function(event) {
             try {
                 if (extension === 'zip') {
                     shp(event.target.result).then(function(geojson){
                         if (Array.isArray(geojson)) {
-                            geojson.forEach(featureCollection => {
-                                processData(featureCollection, featureCollection.name || file.name);
-                            });
+                            geojson.forEach(featureCollection => processData(featureCollection, featureCollection.name || file.name));
                         } else {
                             processData(geojson, file.name);
                         }
@@ -394,7 +402,6 @@
             alert("Error al leer el archivo.");
             map.getContainer().removeChild(loadingMessage);
         };
-
         if (extension === 'zip') {
             reader.readAsArrayBuffer(file);
         } else {
@@ -402,19 +409,17 @@
         }
     }
     
+    
     L.Control.Custom = L.Control.extend({
         onAdd: function(map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control custom-control');
             container.innerText = 'Cargar Archivo(s)';
-            
             const fileInput = L.DomUtil.create('input');
             fileInput.type = 'file';
             fileInput.accept = ".geojson,.json,.zip";
             fileInput.multiple = true;
             fileInput.style.display = 'none';
-
             container.appendChild(fileInput);
-
             fileInput.onchange = (e) => {
                 if (!e.target.files) return;
                 for (const file of e.target.files) {
@@ -422,7 +427,6 @@
                 }
                 e.target.value = '';
             };
-            
             L.DomEvent.on(container, 'click', (e) => {
                 L.DomEvent.stopPropagation(e);
                 fileInput.click();
@@ -432,6 +436,7 @@
     });
     new L.Control.Custom({ position: 'topleft' }).addTo(map);
 
+    
     function exportMap() {
         const controlsToHide = document.querySelectorAll(
             '.leaflet-control-container > .leaflet-top, ' +
@@ -440,7 +445,6 @@
             '#map-title'
         );
         controlsToHide.forEach(el => el.classList.add('hide-for-export'));
-
         leafletImage(map, function(err, canvas) {
             controlsToHide.forEach(el => el.classList.remove('hide-for-export'));
             if (err) {
@@ -465,19 +469,13 @@
     });
     new L.Control.Export({ position: 'topleft' }).addTo(map);
 
+    
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
-
     const drawControl = new L.Control.Draw({
-        edit: {
-            featureGroup: drawnItems,
-            remove: true
-        },
+        edit: { featureGroup: drawnItems, remove: true },
         draw: {
-            polygon: {
-                allowIntersection: false,
-                showArea: true
-            },
+            polygon: { allowIntersection: false, showArea: true },
             polyline: true,
             rectangle: true,
             circle: false,
@@ -485,12 +483,10 @@
         }
     });
     map.addControl(drawControl);
-
     map.on(L.Draw.Event.CREATED, function (e) {
         const layer = e.layer;
         const type = e.layerType;
         let content = '';
-
         if (type === 'polyline') {
             let distance = 0;
             const latlngs = layer.getLatLngs();
@@ -502,16 +498,14 @@
             const area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
             content = `Área: ${ (area / 10000).toFixed(2) } hectáreas`;
         }
-        
         if (content) {
             layer.bindPopup(content).openPopup();
         }
-        
         drawnItems.addLayer(layer);
-        
         drawnItemsHistory.push(layer); 
     });
 
+   
     function undoLastDrawAction() {
         if (drawnItemsHistory.length > 0) {
             const lastDrawnLayer = drawnItemsHistory.pop();
@@ -520,7 +514,6 @@
             }
         }
     }
-
     document.addEventListener('keydown', function(event) {
         if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
             const isInputTarget = event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA';
