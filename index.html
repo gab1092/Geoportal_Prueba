@@ -68,7 +68,6 @@
         .leaflet-top.leaflet-left .custom-control + .custom-control {
             margin-top: 10px;
         }
-        /* --- ESTILO PARA LA ATRIBUCIÓN PERSONALIZADA --- */
         .custom-attribution {
             position: absolute;
             bottom: 0;
@@ -93,7 +92,6 @@
 </div>
 
 <script>
-    // Se desactiva el control de atribución por defecto para evitar duplicados en esa esquina
     const map = L.map('map', { attributionControl: false, preferCanvas: true }).setView([24.5, -99.5], 5); 
     
     const infoControl = L.control();
@@ -111,7 +109,6 @@
     const layerControl = L.control.layers(baseMaps, {}, { collapsed: true }).addTo(map);
     oceanBasemap.addTo(map);
     
-    // Se mantiene la atribución de las capas base en la esquina inferior izquierda
     L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(map);
     
     const sequentialPalettes = { 'YlOrRd': ['#FFFFE5','#FFF7BC','#FEE391','#FEC44F','#FE9929','#EC7014','#CC4C02','#993404','#662506','#4C1B03'], 'Blues': ['#F7FBFF','#E3EEF9','#CFE1F2','#B5D4E9','#AC7E1','#7FB9D9','#64ABD1','#4BA0C9','#3294C1','#0884B9'], 'Greens': ['#F7F7F7','#E5F5E0','#C7E9C0','#A1D99B','#74C476','#41AB5D','#238B45','#006D2C','#00441B','#002B12'], 'Reds': ['#FFF5F0','#FEE0D2','#FCBBA1','#FC9272','#FB6A4A','#EF3B2C','#CB181D','#A50F15','#67000D','#4A0008'] };
@@ -322,25 +319,35 @@
         }
     }
     
+    // --- CÓDIGO CORREGIDO PARA EL BOTÓN DE CARGA ---
     L.Control.Custom = L.Control.extend({
         onAdd: function(map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control custom-control');
             container.innerText = 'Cargar Archivo(s)';
-            const fileInput = L.DomUtil.create('input', 'hidden');
-            fileInput.type = 'file'; 
-            fileInput.accept = ".geojson,.json,.zip"; 
+            
+            const fileInput = L.DomUtil.create('input');
+            fileInput.type = 'file';
+            fileInput.accept = ".geojson,.json,.zip";
             fileInput.multiple = true;
-            container.appendChild(fileInput);
+            fileInput.style.display = 'none'; // El input está oculto
+            
+            container.appendChild(fileInput); // Se añade al contenedor del botón
 
             fileInput.onchange = (e) => { 
                 if (!e.target.files) return; 
                 for (const file of e.target.files) { 
                     handleUploadedFile(file); 
                 } 
-                e.target.value = '';
+                e.target.value = ''; // Se limpia para poder cargar el mismo archivo otra vez
             };
             
-            L.DomEvent.on(container, 'click', (e) => { L.DomEvent.stopPropagation(e); fileInput.click(); });
+            // Se desactiva la propagación del clic para evitar que el mapa lo reciba
+            L.DomEvent.disableClickPropagation(container);
+            // Cuando se hace clic en el botón visible, se activa el clic del input oculto
+            L.DomEvent.on(container, 'click', function() {
+                fileInput.click();
+            });
+
             return container;
         }
     });
