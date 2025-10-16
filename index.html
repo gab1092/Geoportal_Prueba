@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Visualizador</title>
+    <title>Geoportal de muestra</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
@@ -25,6 +25,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script> 
     
     <style>
+        /* --- ESTILOS GENERALES Y FUENTE --- */
         html, body, #map { 
             height: 100%; 
             width: 100%; 
@@ -34,7 +35,7 @@
             font-family: 'Roboto', sans-serif;
         }
 
-        
+        /* --- PANELES Y CONTROLES CON ESTILO MODERNO --- */
         .leaflet-bar, .info, .leaflet-control-layers {
             background-color: white;
             border-radius: 8px !important;
@@ -57,7 +58,7 @@
             box-shadow: 0 6px 14px rgba(0,0,0,0.1);
         }
         
-        
+        /* --- PANEL DE INFORMACIÓN Y LEYENDA (MÁS VERTICAL) --- */
         .info { 
             padding: 10px 15px; 
             max-height: 70vh;
@@ -109,7 +110,7 @@
             height: 35px;
         }
 
-        
+        /* --- LISTA DE CAPAS --- */
         .layer-list li {
             border-radius: 4px;
             margin-bottom: 5px;
@@ -122,7 +123,7 @@
             padding-left: 10px;
         }
         
-        
+        /* --- TÍTULO Y OTROS ELEMENTOS --- */
         #map-title {
             position: absolute;
             top: 15px;
@@ -141,7 +142,7 @@
             margin-top: 10px;
         }
 
-        
+        /* --- CONTROL DE ATRIBUCIÓN PERSONALIZADO --- */
         .custom-attribution {
             position: absolute;
             bottom: 0;
@@ -157,23 +158,23 @@
 </head>
 <body>
 
-<div id="map-title">Visualizador</div>
+<div id="map-title">Geoportal de muestra</div>
 <div id="map"></div>
-<div class="custom-attribution">Hecho con <a href="https://leafletjs.com/" target="_blank">Leaflet</a> | Elaborado por GRC| Exclusivo para fines académicos</div>
+<div class="custom-attribution">Hecho con <a href="https://leafletjs.com/" target="_blank">Leaflet</a> | Elaborado por [Tu Nombre] | Fines Académicos</div>
 
 
 <script>
-    
+    // --- INICIALIZACIÓN DEL MAPA ---
     const map = L.map('map', { 
         attributionControl: false, 
         preferCanvas: true 
     }).setView([24.5, -99.5], 5); 
 
-    
+    // --- VARIABLES GLOBALES ---
     let currentActiveLayer = null;
     let orderedLayers = [];
     
-    
+    // --- CAPAS BASE DE ESRI ---
     const oceanBasemap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri'
     });
@@ -185,21 +186,21 @@
     });
 
     const baseMaps = { "Océano": oceanBasemap, "Calles": streets, "Satélite": satellite };
-    oceanBasemap.addTo(map); 
+    oceanBasemap.addTo(map); // Mapa por defecto
     
-    
+    // --- CONTROL DE CAPAS ---
     const layerControl = L.control.layers(baseMaps, {}, { 
         collapsed: true,
         position: 'topright' 
     }).addTo(map);
 
-    
+    // --- CONTROL DE ATRIBUCIÓN ESTÁNDAR ---
     L.control.attribution({ 
         position: 'bottomleft', 
         prefix: false 
     }).addTo(map);
 
-    
+    // --- AÑADIR RETÍCULA DE COORDENADAS ---
     L.graticule().addTo(map);
     
     const infoControl = L.control();
@@ -409,7 +410,7 @@
         }
     }
     
-    
+    // --- BOTÓN PARA CARGAR ARCHIVOS ---
     L.Control.Custom = L.Control.extend({
         onAdd: function(map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control custom-control');
@@ -436,7 +437,7 @@
     });
     new L.Control.Custom({ position: 'topleft' }).addTo(map);
 
-    
+    // --- BOTÓN PARA EXPORTAR IMAGEN ---
     function exportMap() {
         const controlsToHide = document.querySelectorAll(
             '.leaflet-control-container > .leaflet-top, ' +
@@ -469,7 +470,7 @@
     });
     new L.Control.Export({ position: 'topleft' }).addTo(map);
 
-    
+    // --- HERRAMIENTAS DE DIBUJO ---
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
     const drawControl = new L.Control.Draw({
@@ -505,7 +506,7 @@
         drawnItemsHistory.push(layer); 
     });
 
-   
+    // --- FUNCIÓN DESHACER (CTRL+Z) ---
     function undoLastDrawAction() {
         if (drawnItemsHistory.length > 0) {
             const lastDrawnLayer = drawnItemsHistory.pop();
