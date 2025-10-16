@@ -154,6 +154,7 @@
             z-index: 800;
             border-top-left-radius: 8px;
         }
+        .hide-for-export { display: none !important; }
     </style>
 </head>
 <body>
@@ -428,8 +429,8 @@
                 }
                 e.target.value = '';
             };
-            L.DomEvent.on(container, 'click', (e) => {
-                L.DomEvent.stopPropagation(e);
+            L.DomEvent.disableClickPropagation(container);
+            L.DomEvent.on(container, 'click', () => {
                 fileInput.click();
             });
             return container;
@@ -526,4 +527,5 @@
     });
 </script>
 </body>
+</html>
 </html>
