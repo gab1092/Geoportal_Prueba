@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -330,6 +329,9 @@
 
     function getColor(value, grades, paletteName) { if (value === undefined || value === null) return '#CCCCCC'; const palette = sequentialPalettes[paletteName]; for (let i = grades.length - 2; i >= 0; i--) { if (value > grades[i]) { return palette[i % palette.length]; } } if (value === grades[0]) return palette[0]; return '#CCCCCC'; }
     
+    // =========================================================================
+    // ===== INICIO DE LA SECCIÓN CORREGIDA ======================================
+    // =========================================================================
     function updateVisualization(layer) { 
         if (!layer) return; 
         const config = layer.options.config; 
@@ -341,26 +343,27 @@
                 weight: 2, 
                 color: config.simpleOutlineColor, 
                 fillColor: config.simpleFillColor,
-                fillOpacity: config.globalOpacity // --- MODIFICADO ---
+                fillOpacity: config.globalOpacity
             }; 
             switch(config.simpleRenderMode) { 
-                case 'both': simpleStyle.stroke = true; simpleStyle.fill = true; break; // fillOpacity ya está
-                case 'fill': simpleStyle.stroke = false; simpleStyle.fill = true; break; // fillOpacity ya está
+                case 'both': simpleStyle.stroke = true; simpleStyle.fill = true; break;
+                case 'fill': simpleStyle.stroke = false; simpleStyle.fill = true; break;
                 case 'outline': simpleStyle.stroke = true; simpleStyle.fill = false; break; 
             } 
             
+            // --- CORRECCIÓN ---
+            // Aplicar el estilo al GRUPO, no a cada punto individual.
+            // Añadimos 'radius' y 'weight' para que los puntos se dibujen bien.
             if (isPointLayer) {
-                layer.eachLayer(function(l) {
-                    if (l instanceof L.CircleMarker) {
-                        l.setStyle({ 
-                            fillColor: config.simpleFillColor, 
-                            color: config.simpleOutlineColor, 
-                            fillOpacity: config.globalOpacity, // --- MODIFICADO ---
-                            radius: config.minRadius // --- MODIFICADO --- Usar minRadius como radio base
-                        });
-                    }
+                layer.setStyle({
+                    fillColor: config.simpleFillColor, 
+                    color: config.simpleOutlineColor, 
+                    fillOpacity: config.globalOpacity,
+                    radius: config.minRadius,
+                    weight: 1 // Peso de borde para puntos
                 });
             } else {
+                // Esto ya era correcto para polígonos
                 layer.setStyle(simpleStyle); 
             }
             if (layer === currentActiveLayer) legendControl.update(null); 
@@ -387,7 +390,9 @@
             uniqueValues.forEach((value, index) => { config.categoricalMap[value] = palette[index % palette.length]; }); 
         } 
         
-        // --- MODIFICADO --- Función de estilo dinámico
+        // --- CORRECCIÓN ---
+        // Esta función ahora debe devolver un 'radius' para los modos
+        // clasificado y categórico, para que funcione bien con los puntos.
         const getDynamicStyle = function(feature) { 
             const currentConfig = this.options.config; 
             const value = feature.properties[currentConfig.activeVariable];
@@ -399,7 +404,8 @@
                     weight: 1, 
                     opacity: 1, 
                     color: 'white', 
-                    fillOpacity: currentConfig.globalOpacity // --- MODIFICADO ---
+                    fillOpacity: currentConfig.globalOpacity,
+                    radius: currentConfig.minRadius // <-- AÑADIDO: Radio base para puntos
                 }; 
             } 
             if (currentConfig.displayMode === 'categorical') { 
@@ -410,10 +416,10 @@
                     weight: 1, 
                     opacity: 1, 
                     color: 'white', 
-                    fillOpacity: currentConfig.globalOpacity // --- MODIFICADO ---
+                    fillOpacity: currentConfig.globalOpacity,
+                    radius: currentConfig.minRadius // <-- AÑADIDO: Radio base para puntos
                 }; 
             } 
-            // --- NUEVO --- Modo Graduado
             if (currentConfig.displayMode === 'graduated') {
                 return {
                     fillColor: getColor(value, grades, currentConfig.activePalette),
@@ -427,21 +433,18 @@
             return {};
         }.bind({options: {config: layer.options.config}});
 
-        if (isPointLayer) {
-             layer.eachLayer(function(l) {
-                 if (l instanceof L.CircleMarker) {
-                     const style = getDynamicStyle(l.feature);
-                     l.setStyle(style); // --- MODIFICADO --- Aplica estilo dinámico (incluye radio)
-                 }
-             });
-        } else {
-            layer.setStyle(getDynamicStyle); 
-        }
+        // --- CORRECCIÓN ---
+        // Aplicar la *función* de estilo al GRUPO, tanto para puntos como polígonos.
+        // Se elimina el if/else de 'isPointLayer'
+        layer.setStyle(getDynamicStyle); 
         
         if (layer === currentActiveLayer) { 
             legendControl.update(layer); 
         } 
     }
+    // =========================================================================
+    // ===== FIN DE LA SECCIÓN CORREGIDA =======================================
+    // =========================================================================
 
     function processData(geojson, name) { 
         const numericProperties = [], stringProperties = [], numericStats = {}; 
@@ -499,8 +502,6 @@
                     fillOpacity: layerConfig.globalOpacity // --- MODIFICADO ---
                 });
             }
-            // --- CORRECCIÓN --- 
-            // Se eliminó la coma y la llave extra de aquí
         };
 
         const newLayer = L.geoJSON(geojson, geoJSONOptions);
