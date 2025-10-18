@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Geoportal muestra</title>
+    <title>Geoportal básico</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -41,7 +41,6 @@
             font-family: 'Roboto', sans-serif;
         }
 
-        /* Estilo general para los controles y paneles de Leaflet */
         .leaflet-bar, .info {
             background-color: var(--panel-bg);
             border-radius: 8px;
@@ -72,12 +71,11 @@
             margin-top: 10px;
         }
 
-        /* Panel de configuración principal */
         .info {
             padding: 10px 15px;
             font-size: 14px;
             line-height: 1.5;
-            max-height: 80vh; /* Aumentado para más contenido */
+            max-height: 80vh;
             overflow-y: auto;
         }
         .info h4 {
@@ -96,12 +94,11 @@
         .info.collapsed { max-height: 50px; overflow: hidden; }
         .info.collapsed h4::after { transform: rotate(-90deg); }
 
-        /* Leyenda */
         .legend { text-align: left; line-height: 22px; color: var(--text-color); max-height: 300px; overflow-y: auto; }
         .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1); }
         .legend h4 { background: none; margin: 0 0 10px; padding: 0; color: var(--text-color); font-size: 16px; border: none; }
         
-        /* Controles de formulario (select, input) */
+       
         .info label { display: block; margin-top: 12px; margin-bottom: 4px; font-weight: 500; color: #555; font-size: 13px; }
         .info select, .info input[type="number"], .info input[type="color"] {
             width: 100%;
@@ -122,7 +119,6 @@
         .config-options { border-top: 1px solid var(--border-color); margin-top: 15px; padding-top: 10px; }
         .color-picker-container { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
 
-        /* Lista de capas ordenable */
         .layer-list { list-style: none; padding: 0; margin: 5px 0 15px 0; }
         .layer-list li {
             background-color: #fff;
@@ -146,24 +142,22 @@
         }
         .layer-list li.sortable-ghost { background: #c8ebfb; opacity: 0.7; }
 
-        /* Título del mapa */
         #map-title {
             position: absolute;
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
-            background: rgba(44, 62, 80, 0.85); /* Azul oscuro semitransparente */
+            background: rgba(44, 62, 80, 0.85); 
             color: #FFFFFF;
             padding: 10px 20px;
             border-radius: 8px;
             font-size: 20px;
             font-weight: 500;
             box-shadow: var(--shadow);
-            pointer-events: none; /* Para que no interfiera con el clic en el mapa */
+            pointer-events: none; 
         }
         
-        /* Indicador de carga */
         .loading-indicator {
             position: absolute;
             top: 10px;
@@ -177,7 +171,7 @@
             box-shadow: var(--shadow);
         }
 
-        /* Atribución personalizada */
+
         .custom-attribution {
             position: absolute;
             bottom: 0;
@@ -198,7 +192,7 @@
 </head>
 <body>
 
-<div id="map-title">Geoportal muestra</div>
+<div id="map-title">Geoportal básico</div>
 
 <div id="map"></div>
 
@@ -207,8 +201,6 @@
 </div>
 
 <script>
-    // El código JavaScript no necesita cambios, pero ajustamos un color por defecto
-    // para que coincida con la nueva paleta de colores.
     // =========================================================================
 
     const map = L.map('map', { attributionControl: false, preferCanvas: true }).setView([24.5, -99.5], 5);
