@@ -481,29 +481,7 @@
             maxRadius: 20       // --- NUEVO ---
         }; 
         
-        // --- NUEVO --- Lógica de resaltado
-        function highlightFeature(e) {
-            const layer = e.target;
-            if (layer instanceof L.CircleMarker) {
-                layer.setStyle({
-                    weight: 3,
-                    color: 'var(--highlight-color)',
-                    radius: layer.options.radius * 1.2
-                });
-            } else {
-                layer.setStyle({
-                    weight: 3,
-                    color: 'var(--highlight-color)',
-                    dashArray: ''
-                });
-            }
-            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-                layer.bringToFront();
-            }
-        }
-        function resetHighlight(e) {
-            newLayer.resetStyle(e.target);
-        }
+       
 
         const geoJSONOptions = {
             config: layerConfig,
@@ -529,22 +507,58 @@
             }
         };
 
-        const newLayer = L.geoJSON(geojson, geoJSONOptions);
-        
-        newLayer.options.pointLayer = hasPoints; 
-        newLayer.addTo(map);
+// ... (dentro de la función processData, después de geoJSONOptions)
 
-        newLayer.eachLayer(layer => { 
-            // --- MODIFICADO --- Estilo del popup
-            let popupContent = '<table>'; 
-            for (const key in layer.feature.properties) { 
-                popupContent += `<tr><td><strong>${key}</strong></td><td>${layer.feature.properties[key]}</td></tr>`; 
-            } 
-            popupContent += '</table>'; 
-            layer.bindPopup(popupContent, { maxHeight: 200, minWidth: 200 }); 
-        }); 
-        
-        layerControl.addOverlay(newLayer, name); 
+        const newLayer = L.geoJSON(geojson, geoJSONOptions);
+        
+        newLayer.options.pointLayer = hasPoints; 
+
+        // --- CORRECCIÓN: Definir las funciones AQUÍ ---
+        // Ahora 'newLayer' existe y está correctamente capturada en el closure
+        function highlightFeature(e) {
+            const layer = e.target;
+            if (layer instanceof L.CircleMarker) {
+                layer.setStyle({
+                    weight: 3,
+                    color: 'var(--highlight-color)',
+                    radius: layer.options.radius * 1.2
+                });
+            } else {
+                layer.setStyle({
+                    weight: 3,
+                    color: 'var(--highlight-color)',
+                    dashArray: ''
+                });
+            }
+            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                layer.bringToFront();
+            }
+        }
+        function resetHighlight(e) {
+            newLayer.resetStyle(e.target);
+        }
+        
+        newLayer.addTo(map);
+
+        // --- CORRECCIÓN: Asignar listeners y popups AQUÍ ---
+        newLayer.eachLayer(layer => { 
+            // 1. Asignar los listeners
+            layer.on({
+                mouseover: highlightFeature,
+                mouseout: resetHighlight
+            });
+
+            // 2. Asignar el popup (como ya lo tenías)
+            let popupContent = '<table>'; 
+            for (const key in layer.feature.properties) { 
+                popupContent += `<tr><td><strong>${key}</strong></td><td>${layer.feature.properties[key]}</td></tr>`; 
+            } 
+            popupContent += '</table>'; 
+            layer.bindPopup(popupContent, { maxHeight: 200, minWidth: 200 }); 
+        }); 
+        
+        layerControl.addOverlay(newLayer, name); 
+// ... (el resto de la función)
         orderedLayers.unshift(newLayer); 
         currentActiveLayer = newLayer; 
         infoControl.update(); 
