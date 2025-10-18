@@ -498,12 +498,6 @@
                     fillOpacity: layerConfig.globalOpacity // --- MODIFICADO ---
                 });
             },
-            // --- NUEVO ---
-            onEachFeature: function(feature, layer) {
-                layer.on({
-                    mouseover: highlightFeature,
-                    mouseout: resetHighlight
-                });
             }
         };
 
