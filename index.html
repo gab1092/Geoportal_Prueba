@@ -558,7 +558,7 @@
         infoControl.update(); 
         updateVisualization(currentActiveLayer); 
         applyLayerOrder(); 
-    }
+
 
     infoControl.onAdd = function (map) { this._div = L.DomUtil.create('div', 'info'); L.DomEvent.disableClickPropagation(this._div); L.DomEvent.on(this._div, 'click', function(e) { if (e.target.tagName === 'H4') { this._div.classList.toggle('collapsed'); } }, this); this.update(); return this._div; };
     
