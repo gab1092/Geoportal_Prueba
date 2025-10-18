@@ -15,7 +15,9 @@
     <script src="https://unpkg.com/simple-statistics@7.8.3/dist/simple-statistics.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.graticule@latest/Leaflet.Graticule.css" />
+    <script src="https://unpkg.com/leaflet.graticule@latest/Leaflet.Graticule.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -30,7 +32,6 @@
             --background-color: #F8F9FA;
             --panel-bg: rgba(255, 255, 255, 0.95);
             --shadow: 0 4px 8px rgba(0,0,0,0.1);
-            /* --- NUEVO --- Color para resaltado */
             --highlight-color: #FFC107; 
         }
 
@@ -56,8 +57,10 @@
             color: var(--primary-blue);
         }
 
+        /* (Estilos de .custom-control, .info, .legend, etc. sin cambios) */
+        /* ... */
+
         .custom-control {
-            /* --- MODIFICADO --- Ajustes para íconos */
             padding: 8px;
             line-height: 1;
             font-size: 14px;
@@ -66,14 +69,12 @@
             transition: all 0.2s ease-in-out;
             color: var(--primary-blue);
         }
-        /* --- NUEVO --- Estilo para SVG dentro de botones */
         .custom-control svg {
             width: 20px;
             height: 20px;
             fill: currentColor;
             vertical-align: middle;
         }
-
         .custom-control:hover {
             background-color: var(--light-blue);
             color: var(--dark-blue);
@@ -89,7 +90,6 @@
             line-height: 1.5;
             max-height: 80vh;
             overflow-y: auto;
-            /* --- NUEVO --- Evita que el texto del panel sea seleccionado al arrastrar */
             user-select: none;
         }
         .info h4 {
@@ -115,7 +115,6 @@
             margin-right: 8px; 
             border-radius: 4px; 
             border: 1px solid rgba(0,0,0,0.1); 
-            /* --- NUEVO --- Para alinear mejor los íconos de círculos */
             display: inline-block;
             vertical-align: middle;
             margin-top: 2px;
@@ -133,7 +132,6 @@
             box-sizing: border-box;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
-        /* --- NUEVO --- Estilo para el slider de opacidad */
         .info input[type="range"] {
             padding: 0;
             height: 18px;
@@ -151,7 +149,6 @@
         .config-options { border-top: 1px solid var(--border-color); margin-top: 15px; padding-top: 10px; }
         .color-picker-container { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
 
-        /* --- NUEVO --- Contenedor para botones de capa */
         .layer-controls {
             display: flex;
             justify-content: space-between;
@@ -183,7 +180,7 @@
             padding: 10px;
             margin-bottom: -1px;
             font-size: 14px;
-            cursor: grab; /* --- MODIFICADO --- Mejor cursor para arrastrar */
+            cursor: grab;
             user-select: none;
             transition: background-color 0.2s;
         }
@@ -228,7 +225,6 @@
             box-shadow: var(--shadow);
         }
 
-
         .custom-attribution {
             position: absolute;
             bottom: 0;
@@ -245,7 +241,6 @@
 
         .hide-for-export { display: none !important; }
 
-        /* --- NUEVO --- Estilos para Popups */
         .leaflet-popup-content-wrapper {
             border-radius: 8px;
             box-shadow: var(--shadow);
@@ -273,14 +268,37 @@
             padding-right: 15px;
         }
 
+        /* --- NUEVO: Estilo Flecha de Norte --- */
+        .leaflet-top.leaflet-right .leaflet-control {
+            margin-top: 10px;
+            margin-right: 10px;
+        }
+        .leaflet-control-north-arrow {
+            /* La clase .leaflet-bar ya le da fondo y sombra */
+            padding: 8px;
+        }
+        .leaflet-control-north-arrow svg {
+            width: 28px;
+            height: 28px;
+            fill: var(--text-color);
+        }
+
+        /* --- NUEVO: Estilo para la escala gráfica --- */
+        .leaflet-control-scale-line {
+            background: var(--panel-bg);
+            border-color: var(--border-color);
+            color: var(--text-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+            box-shadow: var(--shadow);
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
 
 <div id="map-title">Geoportal Mejorado</div>
-
 <div id="map"></div>
-
 <div class="custom-attribution">
     Elaborado con <a href="https://leafletjs.com/" target="_blank">Leaflet</a> | Por Gabriela Reséndiz Colorado | Fines académicos
 </div>
@@ -297,7 +315,7 @@
     let sortableInstance = null;
     
     let drawnItemsHistory = []; 
-    let highlightLayer = null; // --- NUEVO --- Para guardar la capa resaltada
+    let highlightLayer = null; 
 
     const oceanBasemap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri' });
     const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OpenStreetMap' });
@@ -307,19 +325,88 @@
     oceanBasemap.addTo(map);
     
     L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(map);
+
+    // =====================================================================
+    // --- NUEVO: Controles de Mapa (Escala, Norte, Coordenadas) ---
+    
+    // 1. Escala Gráfica
+    L.control.scale({ 
+        imperial: false, // Desactiva millas
+        metric: true,    // Activa kilómetros
+        position: 'bottomleft' // La movemos a la esquina inferior izquierda
+    }).addTo(map);
+
+    // 2. Flecha de Norte
+    L.Control.NorthArrow = L.Control.extend({
+        onAdd: function(map) {
+            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-north-arrow');
+            // SVG para la flecha de norte (simple y efectivo)
+            container.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <title>Norte</title>
+                <path d="M12,2L9,9H15L12,2M13,9.5V22H11V9.5H5L12,2.5L19,9.5H13Z" />
+            </svg>`;
+            container.title = 'Norte';
+            return container;
+        }
+    });
+    // Añadimos la flecha en la esquina superior derecha
+    new L.Control.NorthArrow({ position: 'topright' }).addTo(map);
+
+    // 3. Gratícula (Coordenadas)
+    L.graticule({
+        style: {
+            color: '#555', // Color de las líneas
+            weight: 1,
+            opacity: 0.5,
+            dashArray: '5, 5' // Líneas punteadas
+        },
+        showLabel: true, // Mostrar etiquetas de Lat/Lon
+        labelStyle: {
+            color: '#333',
+            font: '12px Roboto, sans-serif'
+        }
+    }).addTo(map);
+    // =====================================================================
+
     
     const sequentialPalettes = { 'YlOrRd': ['#FFFFE5','#FFF7BC','#FEE391','#FEC44F','#FE9929','#EC7014','#CC4C02','#993404','#662506','#4C1B03'], 'Blues': ['#F7FBFF','#DEEBF7','#C6DBEF','#9ECAE1','#6BAED6','#4292C6','#2171B5','#08519C','#08306B'], 'Greens': ['#F7F7F7','#E5F5E0','#C7E9C0','#A1D99B','#74C476','#41AB5D','#238B45','#006D2C','#00441B','#002B12'], 'Reds': ['#FFF5F0','#FEE0D2','#FCBBA1','#FC9272','#FB6A4A','#EF3B2C','#CB181D','#A50F15','#67000D','#4A0008'] };
     const categoricalPalettes = { 'Paired': ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928'], 'Accent': ['#7fc97f','#beaed4','#fdc086','#ffff99','#386cb0','#f0027f','#bf5b17','#666666'], 'Set1': ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf'] };
 
-    // --- FUNCIONES Y CONTROLES ---
+    // --- (Resto de las funciones JS sin cambios) ---
+    // function getRadius(...)
+    // function getColor(...)
+    // function updateVisualization(...)
+    // function processData(...)
+    // infoControl.onAdd = ...
+    // infoControl.update = ...
+    // legendControl.onAdd = ...
+    // legendControl.update = ...
+    // function applyLayerOrder(...)
+    // map.on('overlayadd', ...)
+    // map.on('overlayremove', ...)
+    // function handleUploadedFile(...)
+    // L.Control.Custom = ...
+    // new L.Control.Custom(...)
+    // function exportMap() { ... } (sin cambios)
+    // L.Control.Export = ...
+    // new L.Control.Export(...)
+    // const drawnItems = ...
+    // const drawControl = ...
+    // map.addControl(drawControl);
+    // map.on(L.Draw.Event.CREATED, ...)
+    // function undoLastDrawAction(...)
+    // document.addEventListener('keydown', ...)
 
-    // --- NUEVO --- Función de ayuda para escalar radios
+    // --- COPIAR Y PEGAR EL RESTO DEL SCRIPT DE LA RESPUESTA ANTERIOR AQUÍ ---
+    // (Por brevedad, no pego todo el script de nuevo, solo la parte inicial
+    // que muestra dónde van los nuevos controles)
+
+    // (El resto de tu script ... )
     function getRadius(value, grades, minRadius, maxRadius) {
         if (value === undefined || value === null) return minRadius;
         const paletteLength = grades.length - 1; // e.g., 5 grades -> 4 classes
         for (let i = paletteLength - 1; i >= 0; i--) {
             if (value > grades[i]) {
-                // Escala lineal simple basada en el índice de la clase
                 return minRadius + (i / (paletteLength - 1)) * (maxRadius - minRadius);
             }
         }
@@ -340,11 +427,11 @@
                 weight: 2, 
                 color: config.simpleOutlineColor, 
                 fillColor: config.simpleFillColor,
-                fillOpacity: config.globalOpacity // --- MODIFICADO ---
+                fillOpacity: config.globalOpacity
             }; 
             switch(config.simpleRenderMode) { 
-                case 'both': simpleStyle.stroke = true; simpleStyle.fill = true; break; // fillOpacity ya está
-                case 'fill': simpleStyle.stroke = false; simpleStyle.fill = true; break; // fillOpacity ya está
+                case 'both': simpleStyle.stroke = true; simpleStyle.fill = true; break; 
+                case 'fill': simpleStyle.stroke = false; simpleStyle.fill = true; break; 
                 case 'outline': simpleStyle.stroke = true; simpleStyle.fill = false; break; 
             } 
             
@@ -354,8 +441,8 @@
                         l.setStyle({ 
                             fillColor: config.simpleFillColor, 
                             color: config.simpleOutlineColor, 
-                            fillOpacity: config.globalOpacity, // --- MODIFICADO ---
-                            radius: config.minRadius // --- MODIFICADO --- Usar minRadius como radio base
+                            fillOpacity: config.globalOpacity, 
+                            radius: config.minRadius
                         });
                     }
                 });
@@ -366,7 +453,6 @@
             return; 
         } 
         
-        // --- MODIFICADO --- Lógica de cálculo de clases unificada
         if (config.displayMode === 'classified' || config.displayMode === 'graduated') { 
             const values = layer.toGeoJSON().features.map(f => f.properties[config.activeVariable]).filter(v => v !== null && typeof v === 'number' && isFinite(v)); 
             const uniqueValues = [...new Set(values)]; 
@@ -386,7 +472,6 @@
             uniqueValues.forEach((value, index) => { config.categoricalMap[value] = palette[index % palette.length]; }); 
         } 
         
-        // --- MODIFICADO --- Función de estilo dinámico
         const getDynamicStyle = function(feature) { 
             const currentConfig = this.options.config; 
             const value = feature.properties[currentConfig.activeVariable];
@@ -398,7 +483,7 @@
                     weight: 1, 
                     opacity: 1, 
                     color: 'white', 
-                    fillOpacity: currentConfig.globalOpacity // --- MODIFICADO ---
+                    fillOpacity: currentConfig.globalOpacity
                 }; 
             } 
             if (currentConfig.displayMode === 'categorical') { 
@@ -409,10 +494,9 @@
                     weight: 1, 
                     opacity: 1, 
                     color: 'white', 
-                    fillOpacity: currentConfig.globalOpacity // --- MODIFICADO ---
+                    fillOpacity: currentConfig.globalOpacity
                 }; 
             } 
-            // --- NUEVO --- Modo Graduado
             if (currentConfig.displayMode === 'graduated') {
                 return {
                     fillColor: getColor(value, grades, currentConfig.activePalette),
@@ -430,7 +514,7 @@
              layer.eachLayer(function(l) {
                  if (l instanceof L.CircleMarker) {
                      const style = getDynamicStyle(l.feature);
-                     l.setStyle(style); // --- MODIFICADO --- Aplica estilo dinámico (incluye radio)
+                     l.setStyle(style); 
                  }
              });
         } else {
@@ -461,7 +545,6 @@
 
         const defaultMode = numericProperties.length > 0 ? 'classified' : (stringProperties.length > 0 ? 'categorical' : 'simple'); 
         
-        // --- MODIFICADO --- Configuración de capa
         const layerConfig = { 
             name, 
             numericProperties, 
@@ -476,12 +559,11 @@
             simpleRenderMode: 'both', 
             simpleFillColor: '#007BFF',
             simpleOutlineColor: '#FFFFFF',
-            globalOpacity: 0.8, // --- NUEVO ---
-            minRadius: 6,       // --- NUEVO ---
-            maxRadius: 20       // --- NUEVO ---
+            globalOpacity: 0.8, 
+            minRadius: 6,       
+            maxRadius: 20       
         }; 
         
-        // --- NUEVO --- Lógica de resaltado
         function highlightFeature(e) {
             const layer = e.target;
             if (layer instanceof L.CircleMarker) {
@@ -512,15 +594,14 @@
             },
             pointToLayer: function (feature, latlng) {
                 return L.circleMarker(latlng, {
-                    radius: layerConfig.minRadius, // --- MODIFICADO ---
+                    radius: layerConfig.minRadius, 
                     fillColor: layerConfig.simpleFillColor,
                     color: layerConfig.simpleOutlineColor,
                     weight: 1,
                     opacity: 1,
-                    fillOpacity: layerConfig.globalOpacity // --- MODIFICADO ---
+                    fillOpacity: layerConfig.globalOpacity
                 });
             },
-            // --- NUEVO ---
             onEachFeature: function(feature, layer) {
                 layer.on({
                     mouseover: highlightFeature,
@@ -535,7 +616,6 @@
         newLayer.addTo(map);
 
         newLayer.eachLayer(layer => { 
-            // --- MODIFICADO --- Estilo del popup
             let popupContent = '<table>'; 
             for (const key in layer.feature.properties) { 
                 popupContent += `<tr><td><strong>${key}</strong></td><td>${layer.feature.properties[key]}</td></tr>`; 
@@ -554,7 +634,6 @@
 
     infoControl.onAdd = function (map) { this._div = L.DomUtil.create('div', 'info'); L.DomEvent.disableClickPropagation(this._div); L.DomEvent.on(this._div, 'click', function(e) { if (e.target.tagName === 'H4') { this._div.classList.toggle('collapsed'); } }, this); this.update(); return this._div; };
     
-    // --- MODIFICADO --- Panel de configuración de capa
     infoControl.update = function () { 
         let htmlContent = '<h4>Configuración de Capas</h4>'; 
         if (orderedLayers.length === 0) { 
@@ -568,14 +647,12 @@
         if (currentActiveLayer) { 
             const config = currentActiveLayer.options.config; 
             
-            // --- NUEVO --- Botón de Zoom a Capa
             htmlContent += `<div class="layer-controls">
                                 <button id="zoom-to-layer-btn">Zoom a la Capa</button>
                              </div>`;
 
             htmlContent += `<div class="config-options">`; 
 
-            // --- NUEVO --- Slider de Opacidad
             htmlContent += `<label for="opacity-slider">Opacidad: <span id="opacity-value">${Math.round(config.globalOpacity * 100)}%</span></label>`;
             htmlContent += `<input type="range" id="opacity-slider" min="0" max="1" step="0.05" value="${config.globalOpacity}">`;
 
@@ -584,7 +661,6 @@
             if (config.numericProperties.length > 0) { 
                 htmlContent += `<option value="classified" ${config.displayMode === 'classified' ? 'selected' : ''}>Clasificado (Polígonos)</option>`; 
             } 
-            // --- NUEVO --- Opción de modo Graduado
             if (config.numericProperties.length > 0 && config.pointLayer) {
                 htmlContent += `<option value="graduated" ${config.displayMode === 'graduated' ? 'selected' : ''}>Graduado (Puntos)</option>`;
             }
@@ -612,7 +688,6 @@
                 htmlContent += `</select>`; 
             } 
 
-            // --- NUEVO --- Opciones para modo Graduado
             if (config.displayMode === 'graduated') {
                 htmlContent += `<label for="variable-selector">Variable Numérica:</label><select id="variable-selector">`; 
                 config.numericProperties.forEach(prop => { htmlContent += `<option value="${prop}" ${prop === config.activeVariable ? 'selected' : ''}>${prop}</option>`; }); 
@@ -638,8 +713,6 @@
         
         this._div.innerHTML = htmlContent; 
         
-        // --- Event listeners (Movidos aquí para mejor organización) ---
-        
         const layerListEl = this._div.querySelector('#layer-list'); 
         if (layerListEl) { 
             sortableInstance = new Sortable(layerListEl, { animation: 150, onEnd: (evt) => { const movedItem = orderedLayers.splice(evt.oldIndex, 1)[0]; orderedLayers.splice(evt.newIndex, 0, movedItem); applyLayerOrder(); infoControl.update(); } }); 
@@ -657,7 +730,6 @@
         if (currentActiveLayer) {
             const config = currentActiveLayer.options.config;
             
-            // Listener para Zoom
             const zoomBtn = this._div.querySelector('#zoom-to-layer-btn');
             if (zoomBtn) {
                 zoomBtn.onclick = () => { 
@@ -667,7 +739,6 @@
                 };
             }
 
-            // Listener para Opacidad
             const opacitySlider = this._div.querySelector('#opacity-slider');
             const opacityValue = this._div.querySelector('#opacity-value');
             if (opacitySlider) {
@@ -680,13 +751,11 @@
                 };
             }
             
-            // Listener para Modo
             const modeSelector = this._div.querySelector('#mode-selector'); 
             if (modeSelector) { 
                 modeSelector.onchange = (e) => { config.displayMode = e.target.value; this.update(); updateVisualization(currentActiveLayer); }; 
             } 
 
-            // Listeners para modo Simple
             if (config.displayMode === 'simple') { 
                 const renderMode = this._div.querySelector('#render-mode-selector');
                 if (renderMode) renderMode.onchange = (e) => { config.simpleRenderMode = e.target.value; updateVisualization(currentActiveLayer); }; 
@@ -701,7 +770,6 @@
                 if (radiusInput) radiusInput.onchange = (e) => { config.minRadius = parseInt(e.target.value, 10); updateVisualization(currentActiveLayer); };
             } 
 
-            // Listeners para modo Clasificado
             if (config.displayMode === 'classified') { 
                 const varSelector = this._div.querySelector('#variable-selector');
                 if (varSelector) varSelector.onchange = (e) => { config.activeVariable = e.target.value; updateVisualization(currentActiveLayer); }; 
@@ -713,7 +781,6 @@
                 if (paletteSelector) paletteSelector.onchange = (e) => { config.activePalette = e.target.value; updateVisualization(currentActiveLayer); }; 
             } 
 
-            // --- NUEVO --- Listeners para modo Graduado
             if (config.displayMode === 'graduated') {
                 const varSelector = this._div.querySelector('#variable-selector');
                 if (varSelector) varSelector.onchange = (e) => { config.activeVariable = e.target.value; updateVisualization(currentActiveLayer); }; 
@@ -731,7 +798,6 @@
                 if (maxRadiusInput) maxRadiusInput.onchange = (e) => { config.maxRadius = parseInt(e.target.value, 10); updateVisualization(currentActiveLayer); };
             }
             
-            // Listeners para modo Categórico
             if (config.displayMode === 'categorical') { 
                 const catVarSelector = this._div.querySelector('#categorical-variable-selector');
                 if (catVarSelector) catVarSelector.onchange = (e) => { config.activeCategoricalVariable = e.target.value; updateVisualization(currentActiveLayer); }; 
@@ -743,7 +809,6 @@
     };
     infoControl.addTo(map);
 
-    // --- MODIFICADO --- Leyenda
     legendControl.onAdd = function (map) { this._div = L.DomUtil.create('div', 'info legend'); return this._div; };
     legendControl.update = function (layer) { 
         let content = ""; 
@@ -755,7 +820,6 @@
         const config = layer.options.config;
         const grades = config.numericStats[config.activeVariable]?.grades || [];
 
-        // --- MODIFICADO --- Lógica de leyenda para Clasificado y Graduado
         if ((config.displayMode === 'classified' || config.displayMode === 'graduated') && grades.length > 1) { 
             const palette = sequentialPalettes[config.activePalette]; 
             let labels = ['<h4>' + config.activeVariable + '</h4>'];
@@ -766,11 +830,10 @@
                 if (palette[i]) { 
                     let style = `background:${palette[i]}`;
                     if (isGraduated) {
-                        // Escala el radio del ícono de la leyenda
                         const radius = config.minRadius + (i / (grades.length - 2)) * (config.maxRadius - config.minRadius);
                         style += `; width: ${radius*2}px; height: ${radius*2}px; border-radius: 50%;`;
                     } else if (isPoint) {
-                        style += `; border-radius: 50%;`; // Círculos para clasificado de puntos
+                        style += `; border-radius: 50%;`;
                     }
                     labels.push(`<i style="${style}"></i> ${grades[i].toLocaleString(undefined, {maximumFractionDigits: 2})} &ndash; ${grades[i+1].toLocaleString(undefined, {maximumFractionDigits: 2})}`); 
                 } 
@@ -781,7 +844,7 @@
             for (const value in config.categoricalMap) { 
                 let style = `background:${config.categoricalMap[value]}`;
                 if (config.pointLayer) {
-                     style += `; border-radius: 50%;`; // Círculos para categórico de puntos
+                     style += `; border-radius: 50%;`;
                 }
                 labels.push(`<i style="${style}"></i> ${value}`); 
             } 
@@ -841,11 +904,9 @@
         }
     }
     
-    // --- MODIFICADO --- Botón de Carga con Ícono SVG
     L.Control.Custom = L.Control.extend({
         onAdd: function(map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control custom-control');
-            // Ícono SVG de carga
             container.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Cargar Archivo</title><path d="M19.35,10.04C18.67,6.59 15.64,4 12,4C9.11,4 6.6,5.64 5.35,8.04C2.34,8.36 0,10.91 0,14A6,6 0 0,0 6,20H19A5,5 0 0,0 24,15C24,12.36 21.95,10.22 19.35,10.04M19,18H6A4,4 0 0,1 2,14C2,11.95 3.53,10.24 5.56,10.03L6.63,9.92L7.13,8.97C8.08,7.14 9.94,6 12,6C14.62,6 16.88,7.86 17.39,10.43L17.69,11.93L19.22,12.04C20.78,12.14 22,13.45 22,15A3,3 0 0,1 19,18M8,13H10.55V17H13.45V13H16L12,9L8,13Z" /></svg>';
             container.title = 'Cargar Archivo(s)';
             
@@ -897,11 +958,9 @@
         });
     }
 
-    // --- MODIFICADO --- Botón de Exportar con Ícono SVG
     L.Control.Export = L.Control.extend({
         onAdd: function(map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control custom-control');
-            // Ícono SVG de exportar/descargar
             container.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Exportar Imagen</title><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" /></svg>';
             container.title = 'Exportar Imagen';
             L.DomEvent.on(container, 'click', function(e) { L.DomEvent.stopPropagation(e); exportMap(); });
@@ -910,7 +969,6 @@
     });
     new L.Control.Export({ position: 'topleft' }).addTo(map);
 
-    // --- SECCIÓN DE DIBUJO (sin cambios) ---
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
@@ -976,7 +1034,6 @@
             undoLastDrawAction();
         }
     });
-
 </script>
 </body>
 </html>
