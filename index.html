@@ -875,13 +875,31 @@
     });
     new L.Control.Custom({ position: 'topleft' }).addTo(map);
 
-    function exportMap() {
+function exportMap() {
         const controlsToHide = document.querySelectorAll(
-            '.leaflet-control-container > .leaflet-top, ' +
-            '.leaflet-control-container > .leaflet-bottom-left, ' +
-            '.info.leaflet-control'
+            '.leaflet-control-container > .leaflet-top, ' +  // Oculta controles superiores (zoom, botones personalizados, etc.)
+            '.info.leaflet-control:not(.legend), ' + // Oculta el panel de info, pero NO si también tiene la clase 'legend'
         );
         controlsToHide.forEach(el => el.classList.add('hide-for-export'));
+
+        // Añadimos una clase temporal al cuerpo para asegurar que html2canvas capture todo bien
+        document.body.classList.add('capturing-map');
+
+        leafletImage(map, function(err, canvas) {
+            controlsToHide.forEach(el => el.classList.remove('hide-for-export'));
+            document.body.classList.remove('capturing-map'); // Quitamos la clase temporal
+
+            if (err) {
+                console.error("Error al exportar el mapa con leaflet-image:", err);
+                alert("Hubo un error al exportar el mapa. Por favor, inténtelo de nuevo.");
+            } else {
+                const link = document.createElement('a');
+                link.download = 'mapa_exportado.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }
+        });
+    }
 
         leafletImage(map, function(err, canvas) {
             controlsToHide.forEach(el => el.classList.remove('hide-for-export'));
