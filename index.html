@@ -309,7 +309,7 @@
     L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(map);
     
     const sequentialPalettes = { 'YlOrRd': ['#FFFFE5','#FFF7BC','#FEE391','#FEC44F','#FE9929','#EC7014','#CC4C02','#993404','#662506','#4C1B03'], 'Blues': ['#F7FBFF','#DEEBF7','#C6DBEF','#9ECAE1','#6BAED6','#4292C6','#2171B5','#08519C','#08306B'], 'Greens': ['#F7F7F7','#E5F5E0','#C7E9C0','#A1D99B','#74C476','#41AB5D','#238B45','#006D2C','#00441B','#002B12'], 'Reds': ['#FFF5F0','#FEE0D2','#FCBBA1','#FC9272','#FB6A4A','#EF3B2C','#CB181D','#A50F15','#67000D','#4A0008'] };
-    const categoricalPalettes = { 'Paired': ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928'], 'Accent': ['#7fc97f','#beaed4','#fdc086','#ffff99','#386cb0','#f0027f','#bf5b17','#666666'], 'Set1': ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf'] };
+    const categoricalPalettes = { 'Paired': ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff9D9','#b15928'], 'Accent': ['#7fc97f','#beaed4','#fdc086','#ffff99','#386cb0','#f0027f','#bf5b17','#666666'], 'Set1': ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf'] };
 
     // --- FUNCIONES Y CONTROLES ---
 
@@ -329,9 +329,8 @@
 
     function getColor(value, grades, paletteName) { if (value === undefined || value === null) return '#CCCCCC'; const palette = sequentialPalettes[paletteName]; for (let i = grades.length - 2; i >= 0; i--) { if (value > grades[i]) { return palette[i % palette.length]; } } if (value === grades[0]) return palette[0]; return '#CCCCCC'; }
     
-    // =========================================================================
-    // ===== INICIO DE LA SECCIÓN CORREGIDA ======================================
-    // =========================================================================
+    // Esta función está bien, la lógica de mi "Intento 3" era correcta.
+    // El problema NO está aquí, está en las funciones de highlight.
     function updateVisualization(layer) { 
         if (!layer) return; 
         const config = layer.options.config; 
@@ -351,9 +350,6 @@
                 case 'outline': simpleStyle.stroke = true; simpleStyle.fill = false; break; 
             } 
             
-            // --- CORRECCIÓN ---
-            // Aplicar el estilo al GRUPO, no a cada punto individual.
-            // Añadimos 'radius' y 'weight' para que los puntos se dibujen bien.
             if (isPointLayer) {
                 layer.setStyle({
                     fillColor: config.simpleFillColor, 
@@ -363,14 +359,12 @@
                     weight: 1 // Peso de borde para puntos
                 });
             } else {
-                // Esto ya era correcto para polígonos
                 layer.setStyle(simpleStyle); 
             }
             if (layer === currentActiveLayer) legendControl.update(null); 
             return; 
         } 
         
-        // --- MODIFICADO --- Lógica de cálculo de clases unificada
         if (config.displayMode === 'classified' || config.displayMode === 'graduated') { 
             const values = layer.toGeoJSON().features.map(f => f.properties[config.activeVariable]).filter(v => v !== null && typeof v === 'number' && isFinite(v)); 
             const uniqueValues = [...new Set(values)]; 
@@ -390,9 +384,6 @@
             uniqueValues.forEach((value, index) => { config.categoricalMap[value] = palette[index % palette.length]; }); 
         } 
         
-        // --- CORRECCIÓN ---
-        // Esta función ahora debe devolver un 'radius' para los modos
-        // clasificado y categórico, para que funcione bien con los puntos.
         const getDynamicStyle = function(feature) { 
             const currentConfig = this.options.config; 
             const value = feature.properties[currentConfig.activeVariable];
@@ -405,7 +396,7 @@
                     opacity: 1, 
                     color: 'white', 
                     fillOpacity: currentConfig.globalOpacity,
-                    radius: currentConfig.minRadius // <-- AÑADIDO: Radio base para puntos
+                    radius: currentConfig.minRadius
                 }; 
             } 
             if (currentConfig.displayMode === 'categorical') { 
@@ -417,7 +408,7 @@
                     opacity: 1, 
                     color: 'white', 
                     fillOpacity: currentConfig.globalOpacity,
-                    radius: currentConfig.minRadius // <-- AÑADIDO: Radio base para puntos
+                    radius: currentConfig.minRadius
                 }; 
             } 
             if (currentConfig.displayMode === 'graduated') {
@@ -433,18 +424,12 @@
             return {};
         }.bind({options: {config: layer.options.config}});
 
-        // --- CORRECCIÓN ---
-        // Aplicar la *función* de estilo al GRUPO, tanto para puntos como polígonos.
-        // Se elimina el if/else de 'isPointLayer'
         layer.setStyle(getDynamicStyle); 
         
         if (layer === currentActiveLayer) { 
             legendControl.update(layer); 
         } 
     }
-    // =========================================================================
-    // ===== FIN DE LA SECCIÓN CORREGIDA =======================================
-    // =========================================================================
 
     function processData(geojson, name) { 
         const numericProperties = [], stringProperties = [], numericStats = {}; 
@@ -465,7 +450,6 @@
 
         const defaultMode = numericProperties.length > 0 ? 'classified' : (stringProperties.length > 0 ? 'categorical' : 'simple'); 
         
-        // --- MODIFICADO --- Configuración de capa
         const layerConfig = { 
             name, 
             numericProperties, 
@@ -480,9 +464,9 @@
             simpleRenderMode: 'both', 
             simpleFillColor: '#007BFF',
             simpleOutlineColor: '#FFFFFF',
-            globalOpacity: 0.8, // --- NUEVO ---
-            minRadius: 6,       // --- NUEVO ---
-            maxRadius: 20       // --- NUEVO ---
+            globalOpacity: 0.8,
+            minRadius: 6,
+            maxRadius: 20
         }; 
         
         
@@ -494,12 +478,12 @@
             },
             pointToLayer: function (feature, latlng) {
                 return L.circleMarker(latlng, {
-                    radius: layerConfig.minRadius, // --- MODIFICADO ---
+                    radius: layerConfig.minRadius,
                     fillColor: layerConfig.simpleFillColor,
                     color: layerConfig.simpleOutlineColor,
                     weight: 1,
                     opacity: 1,
-                    fillOpacity: layerConfig.globalOpacity // --- MODIFICADO ---
+                    fillOpacity: layerConfig.globalOpacity
                 });
             }
         };
@@ -508,34 +492,61 @@
         
         newLayer.options.pointLayer = hasPoints; 
 
-        // --- CORRECCIÓN: Definir las funciones AQUÍ ---
-        // Ahora 'newLayer' existe y está correctamente capturada en el closure
+        // =========================================================================
+        // ===== INICIO DE LA SECCIÓN CORREGIDA (CANVAS) ===========================
+        // =========================================================================
+
+        // Esta es la forma correcta de resaltar en modo CANVAS.
+        // No modificamos la capa original, sino que creamos una capa temporal encima.
+
         function highlightFeature(e) {
             const layer = e.target;
+
+            // Si ya hay una capa resaltada, la quitamos primero
+            if (highlightLayer) {
+                map.removeLayer(highlightLayer);
+                highlightLayer = null;
+            }
+
+            // Estilo para el resaltado
+            const highlightStyle = {
+                weight: 3,
+                color: 'var(--highlight-color)',
+                dashArray: '',
+                fillColor: 'var(--highlight-color)',
+                fillOpacity: 0.4 // Le damos algo de opacidad
+            };
+
             if (layer instanceof L.CircleMarker) {
-                layer.setStyle({
-                    weight: 3,
-                    color: 'var(--highlight-color)',
+                // Para puntos, creamos un nuevo círculo temporal
+                highlightLayer = L.circleMarker(layer.getLatLng(), {
+                    ...highlightStyle,
                     radius: layer.options.radius * 1.2
-                });
+                }).addTo(map);
             } else {
-                layer.setStyle({
-                    weight: 3,
-                    color: 'var(--highlight-color)',
-                    dashArray: ''
-                });
-            }
-            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-                layer.bringToFront();
+                // Para polígonos/líneas, creamos un GeoJSON temporal
+                highlightLayer = L.geoJSON(layer.toGeoJSON(), {
+                    style: highlightStyle
+                }).addTo(map);
             }
         }
+
         function resetHighlight(e) {
-            newLayer.resetStyle(e.target);
+            // En mouseout, simplemente eliminamos la capa temporal
+            if (highlightLayer) {
+                map.removeLayer(highlightLayer);
+                highlightLayer = null;
+            }
+            // NO usamos resetStyle() en la capa original (newLayer)
         }
+        
+        // =========================================================================
+        // ===== FIN DE LA SECCIÓN CORREGIDA (CANVAS) ==============================
+        // =========================================================================
         
         newLayer.addTo(map);
 
-        // --- CORRECCIÓN: Asignar listeners y popups AQUÍ ---
+        // Asignamos los listeners y popups
         newLayer.eachLayer(layer => { 
             // 1. Asignar los listeners
             layer.on({
@@ -543,7 +554,7 @@
                 mouseout: resetHighlight
             });
 
-            // 2. Asignar el popup (como ya lo tenías)
+            // 2. Asignar el popup
             let popupContent = '<table>'; 
             for (const key in layer.feature.properties) { 
                 popupContent += `<tr><td><strong>${key}</strong></td><td>${layer.feature.properties[key]}</td></tr>`; 
@@ -562,7 +573,6 @@
 
     infoControl.onAdd = function (map) { this._div = L.DomUtil.create('div', 'info'); L.DomEvent.disableClickPropagation(this._div); L.DomEvent.on(this._div, 'click', function(e) { if (e.target.tagName === 'H4') { this._div.classList.toggle('collapsed'); } }, this); this.update(); return this._div; };
     
-    // --- MODIFICADO --- Panel de configuración de capa
     infoControl.update = function () { 
         let htmlContent = '<h4>Configuración de Capas</h4>'; 
         if (orderedLayers.length === 0) { 
@@ -576,14 +586,12 @@
         if (currentActiveLayer) { 
             const config = currentActiveLayer.options.config; 
             
-            // --- NUEVO --- Botón de Zoom a Capa
             htmlContent += `<div class="layer-controls">
                                 <button id="zoom-to-layer-btn">Zoom a la Capa</button>
                            </div>`;
 
             htmlContent += `<div class="config-options">`; 
 
-            // --- NUEVO --- Slider de Opacidad
             htmlContent += `<label for="opacity-slider">Opacidad: <span id="opacity-value">${Math.round(config.globalOpacity * 100)}%</span></label>`;
             htmlContent += `<input type="range" id="opacity-slider" min="0" max="1" step="0.05" value="${config.globalOpacity}">`;
 
@@ -592,7 +600,6 @@
             if (config.numericProperties.length > 0) { 
                 htmlContent += `<option value="classified" ${config.displayMode === 'classified' ? 'selected' : ''}>Clasificado (Polígonos)</option>`; 
             } 
-            // --- NUEVO --- Opción de modo Graduado
             if (config.numericProperties.length > 0 && config.pointLayer) {
                 htmlContent += `<option value="graduated" ${config.displayMode === 'graduated' ? 'selected' : ''}>Graduado (Puntos)</option>`;
             }
@@ -620,7 +627,6 @@
                 htmlContent += `</select>`; 
             } 
 
-            // --- NUEVO --- Opciones para modo Graduado
             if (config.displayMode === 'graduated') {
                 htmlContent += `<label for="variable-selector">Variable Numérica:</label><select id="variable-selector">`; 
                 config.numericProperties.forEach(prop => { htmlContent += `<option value="${prop}" ${prop === config.activeVariable ? 'selected' : ''}>${prop}</option>`; }); 
@@ -646,8 +652,6 @@
         
         this._div.innerHTML = htmlContent; 
         
-        // --- Event listeners (Movidos aquí para mejor organización) ---
-        
         const layerListEl = this._div.querySelector('#layer-list'); 
         if (layerListEl) { 
             sortableInstance = new Sortable(layerListEl, { animation: 150, onEnd: (evt) => { const movedItem = orderedLayers.splice(evt.oldIndex, 1)[0]; orderedLayers.splice(evt.newIndex, 0, movedItem); applyLayerOrder(); infoControl.update(); } }); 
@@ -665,7 +669,6 @@
         if (currentActiveLayer) {
             const config = currentActiveLayer.options.config;
             
-            // Listener para Zoom
             const zoomBtn = this._div.querySelector('#zoom-to-layer-btn');
             if (zoomBtn) {
                 zoomBtn.onclick = () => { 
@@ -675,7 +678,6 @@
                 };
             }
 
-            // Listener para Opacidad
             const opacitySlider = this._div.querySelector('#opacity-slider');
             const opacityValue = this._div.querySelector('#opacity-value');
             if (opacitySlider) {
@@ -688,13 +690,11 @@
                 };
             }
             
-            // Listener para Modo
             const modeSelector = this._div.querySelector('#mode-selector'); 
             if (modeSelector) { 
                 modeSelector.onchange = (e) => { config.displayMode = e.target.value; this.update(); updateVisualization(currentActiveLayer); }; 
             } 
 
-            // Listeners para modo Simple
             if (config.displayMode === 'simple') { 
                 const renderMode = this._div.querySelector('#render-mode-selector');
                 if (renderMode) renderMode.onchange = (e) => { config.simpleRenderMode = e.target.value; updateVisualization(currentActiveLayer); }; 
@@ -709,7 +709,6 @@
                 if (radiusInput) radiusInput.onchange = (e) => { config.minRadius = parseInt(e.target.value, 10); updateVisualization(currentActiveLayer); };
             } 
 
-            // Listeners para modo Clasificado
             if (config.displayMode === 'classified') { 
                 const varSelector = this._div.querySelector('#variable-selector');
                 if (varSelector) varSelector.onchange = (e) => { config.activeVariable = e.target.value; updateVisualization(currentActiveLayer); }; 
@@ -721,7 +720,6 @@
                 if (paletteSelector) paletteSelector.onchange = (e) => { config.activePalette = e.target.value; updateVisualization(currentActiveLayer); }; 
             } 
 
-            // --- NUEVO --- Listeners para modo Graduado
             if (config.displayMode === 'graduated') {
                 const varSelector = this._div.querySelector('#variable-selector');
                 if (varSelector) varSelector.onchange = (e) => { config.activeVariable = e.target.value; updateVisualization(currentActiveLayer); }; 
@@ -739,7 +737,6 @@
                 if (maxRadiusInput) maxRadiusInput.onchange = (e) => { config.maxRadius = parseInt(e.target.value, 10); updateVisualization(currentActiveLayer); };
             }
             
-            // Listeners para modo Categórico
             if (config.displayMode === 'categorical') { 
                 const catVarSelector = this._div.querySelector('#categorical-variable-selector');
                 if (catVarSelector) catVarSelector.onchange = (e) => { config.activeCategoricalVariable = e.target.value; updateVisualization(currentActiveLayer); }; 
@@ -751,7 +748,6 @@
     };
     infoControl.addTo(map);
 
-    // --- MODIFICADO --- Leyenda
     legendControl.onAdd = function (map) { this._div = L.DomUtil.create('div', 'info legend'); return this._div; };
     legendControl.update = function (layer) { 
         let content = ""; 
@@ -763,7 +759,6 @@
         const config = layer.options.config;
         const grades = config.numericStats[config.activeVariable]?.grades || [];
 
-        // --- MODIFICADO --- Lógica de leyenda para Clasificado y Graduado
         if ((config.displayMode === 'classified' || config.displayMode === 'graduated') && grades.length > 1) { 
             const palette = sequentialPalettes[config.activePalette]; 
             let labels = ['<h4>' + config.activeVariable + '</h4>'];
@@ -774,11 +769,10 @@
                 if (palette[i]) { 
                     let style = `background:${palette[i]}`;
                     if (isGraduated) {
-                        // Escala el radio del ícono de la leyenda
                         const radius = config.minRadius + (i / (grades.length - 2)) * (config.maxRadius - config.minRadius);
                         style += `; width: ${radius*2}px; height: ${radius*2}px; border-radius: 50%;`;
                     } else if (isPoint) {
-                        style += `; border-radius: 50%;`; // Círculos para clasificado de puntos
+                        style += `; border-radius: 50%;`;
                     }
                     labels.push(`<i style="${style}"></i> ${grades[i].toLocaleString(undefined, {maximumFractionDigits: 2})} &ndash; ${grades[i+1].toLocaleString(undefined, {maximumFractionDigits: 2})}`); 
                 } 
@@ -789,7 +783,7 @@
             for (const value in config.categoricalMap) { 
                 let style = `background:${config.categoricalMap[value]}`;
                 if (config.pointLayer) {
-                     style += `; border-radius: 50%;`; // Círculos para categórico de puntos
+                     style += `; border-radius: 50%;`;
                 }
                 labels.push(`<i style="${style}"></i> ${value}`); 
             } 
@@ -849,11 +843,9 @@
         }
     }
     
-    // --- MODIFICADO --- Botón de Carga con Ícono SVG
     L.Control.Custom = L.Control.extend({
         onAdd: function(map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control custom-control');
-            // Ícono SVG de carga
             container.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Cargar Archivo</title><path d="M19.35,10.04C18.67,6.59 15.64,4 12,4C9.11,4 6.6,5.64 5.35,8.04C2.34,8.36 0,10.91 0,14A6,6 0 0,0 6,20H19A5,5 0 0,0 24,15C24,12.36 21.95,10.22 19.35,10.04M19,18H6A4,4 0 0,1 2,14C2,11.95 3.53,10.24 5.56,10.03L6.63,9.92L7.13,8.97C8.08,7.14 9.94,6 12,6C14.62,6 16.88,7.86 17.39,10.43L17.69,11.93L19.22,12.04C20.78,12.14 22,13.45 22,15A3,3 0 0,1 19,18M8,13H10.55V17H13.45V13H16L12,9L8,13Z" /></svg>';
             container.title = 'Cargar Archivo(s)';
             
@@ -905,11 +897,9 @@
         });
     }
 
-    // --- MODIFICADO --- Botón de Exportar con Ícono SVG
     L.Control.Export = L.Control.extend({
         onAdd: function(map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control custom-control');
-            // Ícono SVG de exportar/descargar
             container.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Exportar Imagen</title><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" /></svg>';
             container.title = 'Exportar Imagen';
             L.DomEvent.on(container, 'click', function(e) { L.DomEvent.stopPropagation(e); exportMap(); });
@@ -918,7 +908,6 @@
     });
     new L.Control.Export({ position: 'topleft' }).addTo(map);
 
-    // --- SECCIÓN DE DIBUJO (sin cambios) ---
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
