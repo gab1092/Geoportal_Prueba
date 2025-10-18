@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -481,7 +482,7 @@
             maxRadius: 20       // --- NUEVO ---
         }; 
         
-       
+        
 
         const geoJSONOptions = {
             config: layerConfig,
@@ -497,68 +498,66 @@
                     opacity: 1,
                     fillOpacity: layerConfig.globalOpacity // --- MODIFICADO ---
                 });
-            },
             }
+            // --- CORRECCIÓN --- 
+            // Se eliminó la coma y la llave extra de aquí
         };
 
-// ... (dentro de la función processData, después de geoJSONOptions)
-
-        const newLayer = L.geoJSON(geojson, geoJSONOptions);
-        
-        newLayer.options.pointLayer = hasPoints; 
+        const newLayer = L.geoJSON(geojson, geoJSONOptions);
+        
+        newLayer.options.pointLayer = hasPoints; 
 
         // --- CORRECCIÓN: Definir las funciones AQUÍ ---
         // Ahora 'newLayer' existe y está correctamente capturada en el closure
         function highlightFeature(e) {
-            const layer = e.target;
-            if (layer instanceof L.CircleMarker) {
-                layer.setStyle({
-                    weight: 3,
-                    color: 'var(--highlight-color)',
-                    radius: layer.options.radius * 1.2
-                });
-            } else {
-                layer.setStyle({
-                    weight: 3,
-                    color: 'var(--highlight-color)',
-                    dashArray: ''
-                });
-            }
-            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-                layer.bringToFront();
-            }
-        }
-        function resetHighlight(e) {
-            newLayer.resetStyle(e.target);
-        }
-        
-        newLayer.addTo(map);
+            const layer = e.target;
+            if (layer instanceof L.CircleMarker) {
+                layer.setStyle({
+                    weight: 3,
+                    color: 'var(--highlight-color)',
+                    radius: layer.options.radius * 1.2
+                });
+            } else {
+                layer.setStyle({
+                    weight: 3,
+                    color: 'var(--highlight-color)',
+                    dashArray: ''
+                });
+            }
+            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                layer.bringToFront();
+            }
+        }
+        function resetHighlight(e) {
+            newLayer.resetStyle(e.target);
+        }
+        
+        newLayer.addTo(map);
 
         // --- CORRECCIÓN: Asignar listeners y popups AQUÍ ---
-        newLayer.eachLayer(layer => { 
+        newLayer.eachLayer(layer => { 
             // 1. Asignar los listeners
             layer.on({
-                mouseover: highlightFeature,
-                mouseout: resetHighlight
-            });
+                mouseover: highlightFeature,
+                mouseout: resetHighlight
+            });
 
-            // 2. Asignar el popup (como ya lo tenías)
-            let popupContent = '<table>'; 
-            for (const key in layer.feature.properties) { 
-                popupContent += `<tr><td><strong>${key}</strong></td><td>${layer.feature.properties[key]}</td></tr>`; 
-            } 
-            popupContent += '</table>'; 
-            layer.bindPopup(popupContent, { maxHeight: 200, minWidth: 200 }); 
-        }); 
-        
-        layerControl.addOverlay(newLayer, name); 
-// ... (el resto de la función)
+            // 2. Asignar el popup (como ya lo tenías)
+            let popupContent = '<table>'; 
+            for (const key in layer.feature.properties) { 
+                popupContent += `<tr><td><strong>${key}</strong></td><td>${layer.feature.properties[key]}</td></tr>`; 
+            } 
+            popupContent += '</table>'; 
+            layer.bindPopup(popupContent, { maxHeight: 200, minWidth: 200 }); 
+        }); 
+        
+        layerControl.addOverlay(newLayer, name); 
         orderedLayers.unshift(newLayer); 
         currentActiveLayer = newLayer; 
         infoControl.update(); 
         updateVisualization(currentActiveLayer); 
         applyLayerOrder(); 
-
+    }
 
     infoControl.onAdd = function (map) { this._div = L.DomUtil.create('div', 'info'); L.DomEvent.disableClickPropagation(this._div); L.DomEvent.on(this._div, 'click', function(e) { if (e.target.tagName === 'H4') { this._div.classList.toggle('collapsed'); } }, this); this.update(); return this._div; };
     
@@ -579,7 +578,7 @@
             // --- NUEVO --- Botón de Zoom a Capa
             htmlContent += `<div class="layer-controls">
                                 <button id="zoom-to-layer-btn">Zoom a la Capa</button>
-                             </div>`;
+                           </div>`;
 
             htmlContent += `<div class="config-options">`; 
 
