@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Geoportal básico</title>
+    <title>Geoportal Mejorado</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -30,6 +30,8 @@
             --background-color: #F8F9FA;
             --panel-bg: rgba(255, 255, 255, 0.95);
             --shadow: 0 4px 8px rgba(0,0,0,0.1);
+            /* --- NUEVO --- Color para resaltado */
+            --highlight-color: #FFC107; 
         }
 
         html, body, #map {
@@ -55,13 +57,23 @@
         }
 
         .custom-control {
-            padding: 10px 15px;
+            /* --- MODIFICADO --- Ajustes para íconos */
+            padding: 8px;
+            line-height: 1;
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s ease-in-out;
             color: var(--primary-blue);
         }
+        /* --- NUEVO --- Estilo para SVG dentro de botones */
+        .custom-control svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+            vertical-align: middle;
+        }
+
         .custom-control:hover {
             background-color: var(--light-blue);
             color: var(--dark-blue);
@@ -77,6 +89,8 @@
             line-height: 1.5;
             max-height: 80vh;
             overflow-y: auto;
+            /* --- NUEVO --- Evita que el texto del panel sea seleccionado al arrastrar */
+            user-select: none;
         }
         .info h4 {
             margin: -10px -15px 15px -15px;
@@ -87,7 +101,6 @@
             border-top-left-radius: 8px;
             border-top-right-radius: 8px;
             cursor: pointer;
-            user-select: none;
             font-weight: 700;
         }
         .info h4::after { content: ' ▼'; font-size: 12px; float: right; transition: transform 0.2s; }
@@ -95,12 +108,23 @@
         .info.collapsed h4::after { transform: rotate(-90deg); }
 
         .legend { text-align: left; line-height: 22px; color: var(--text-color); max-height: 300px; overflow-y: auto; }
-        .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1); }
+        .legend i { 
+            width: 18px; 
+            height: 18px; 
+            float: left; 
+            margin-right: 8px; 
+            border-radius: 4px; 
+            border: 1px solid rgba(0,0,0,0.1); 
+            /* --- NUEVO --- Para alinear mejor los íconos de círculos */
+            display: inline-block;
+            vertical-align: middle;
+            margin-top: 2px;
+        }
         .legend h4 { background: none; margin: 0 0 10px; padding: 0; color: var(--text-color); font-size: 16px; border: none; }
         
-       
+        
         .info label { display: block; margin-top: 12px; margin-bottom: 4px; font-weight: 500; color: #555; font-size: 13px; }
-        .info select, .info input[type="number"], .info input[type="color"] {
+        .info select, .info input[type="number"], .info input[type="color"], .info input[type="range"] {
             width: 100%;
             padding: 8px;
             border: 1px solid var(--border-color);
@@ -109,6 +133,14 @@
             box-sizing: border-box;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
+        /* --- NUEVO --- Estilo para el slider de opacidad */
+        .info input[type="range"] {
+            padding: 0;
+            height: 18px;
+            margin-top: 8px;
+            cursor: pointer;
+        }
+        
         .info select:focus, .info input[type="number"]:focus {
             border-color: var(--primary-blue);
             box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
@@ -119,6 +151,31 @@
         .config-options { border-top: 1px solid var(--border-color); margin-top: 15px; padding-top: 10px; }
         .color-picker-container { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
 
+        /* --- NUEVO --- Contenedor para botones de capa */
+        .layer-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+        }
+        .layer-controls button {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .layer-controls button:hover {
+            background: var(--dark-blue);
+        }
+
+
         .layer-list { list-style: none; padding: 0; margin: 5px 0 15px 0; }
         .layer-list li {
             background-color: #fff;
@@ -126,7 +183,7 @@
             padding: 10px;
             margin-bottom: -1px;
             font-size: 14px;
-            cursor: pointer;
+            cursor: grab; /* --- MODIFICADO --- Mejor cursor para arrastrar */
             user-select: none;
             transition: background-color 0.2s;
         }
@@ -188,11 +245,39 @@
 
         .hide-for-export { display: none !important; }
 
+        /* --- NUEVO --- Estilos para Popups */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+        .leaflet-popup-content {
+            font-family: 'Roboto', sans-serif;
+            margin: 15px 20px;
+        }
+        .leaflet-popup-content table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .leaflet-popup-content th,
+        .leaflet-popup-content td {
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+        }
+        .leaflet-popup-content tr:last-child td {
+            border-bottom: none;
+        }
+        .leaflet-popup-content td:first-child {
+            font-weight: 500;
+            color: var(--text-color);
+            padding-right: 15px;
+        }
+
     </style>
 </head>
 <body>
 
-<div id="map-title">Geoportal básico</div>
+<div id="map-title">Geoportal Mejorado</div>
 
 <div id="map"></div>
 
@@ -212,6 +297,7 @@
     let sortableInstance = null;
     
     let drawnItemsHistory = []; 
+    let highlightLayer = null; // --- NUEVO --- Para guardar la capa resaltada
 
     const oceanBasemap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri' });
     const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OpenStreetMap' });
@@ -226,7 +312,23 @@
     const categoricalPalettes = { 'Paired': ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928'], 'Accent': ['#7fc97f','#beaed4','#fdc086','#ffff99','#386cb0','#f0027f','#bf5b17','#666666'], 'Set1': ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf'] };
 
     // --- FUNCIONES Y CONTROLES ---
+
+    // --- NUEVO --- Función de ayuda para escalar radios
+    function getRadius(value, grades, minRadius, maxRadius) {
+        if (value === undefined || value === null) return minRadius;
+        const paletteLength = grades.length - 1; // e.g., 5 grades -> 4 classes
+        for (let i = paletteLength - 1; i >= 0; i--) {
+            if (value > grades[i]) {
+                // Escala lineal simple basada en el índice de la clase
+                return minRadius + (i / (paletteLength - 1)) * (maxRadius - minRadius);
+            }
+        }
+        if (value === grades[0]) return minRadius;
+        return minRadius; // Fallback
+    }
+
     function getColor(value, grades, paletteName) { if (value === undefined || value === null) return '#CCCCCC'; const palette = sequentialPalettes[paletteName]; for (let i = grades.length - 2; i >= 0; i--) { if (value > grades[i]) { return palette[i % palette.length]; } } if (value === grades[0]) return palette[0]; return '#CCCCCC'; }
+    
     function updateVisualization(layer) { 
         if (!layer) return; 
         const config = layer.options.config; 
@@ -234,17 +336,27 @@
         const isPointLayer = layer.options.pointLayer;
         
         if (config.displayMode === 'simple') { 
-            let simpleStyle = { weight: 2, color: config.simpleOutlineColor, fillColor: config.simpleFillColor }; 
+            let simpleStyle = { 
+                weight: 2, 
+                color: config.simpleOutlineColor, 
+                fillColor: config.simpleFillColor,
+                fillOpacity: config.globalOpacity // --- MODIFICADO ---
+            }; 
             switch(config.simpleRenderMode) { 
-                case 'both': simpleStyle.stroke = true; simpleStyle.fill = true; simpleStyle.fillOpacity = 0.6; break; 
-                case 'fill': simpleStyle.stroke = false; simpleStyle.fill = true; simpleStyle.fillOpacity = 0.6; break; 
+                case 'both': simpleStyle.stroke = true; simpleStyle.fill = true; break; // fillOpacity ya está
+                case 'fill': simpleStyle.stroke = false; simpleStyle.fill = true; break; // fillOpacity ya está
                 case 'outline': simpleStyle.stroke = true; simpleStyle.fill = false; break; 
             } 
             
             if (isPointLayer) {
                 layer.eachLayer(function(l) {
                     if (l instanceof L.CircleMarker) {
-                        l.setStyle({ fillColor: config.simpleFillColor, color: config.simpleOutlineColor, fillOpacity: 0.8, radius: 8 });
+                        l.setStyle({ 
+                            fillColor: config.simpleFillColor, 
+                            color: config.simpleOutlineColor, 
+                            fillOpacity: config.globalOpacity, // --- MODIFICADO ---
+                            radius: config.minRadius // --- MODIFICADO --- Usar minRadius como radio base
+                        });
                     }
                 });
             } else {
@@ -254,7 +366,8 @@
             return; 
         } 
         
-        if (config.displayMode === 'classified') { 
+        // --- MODIFICADO --- Lógica de cálculo de clases unificada
+        if (config.displayMode === 'classified' || config.displayMode === 'graduated') { 
             const values = layer.toGeoJSON().features.map(f => f.properties[config.activeVariable]).filter(v => v !== null && typeof v === 'number' && isFinite(v)); 
             const uniqueValues = [...new Set(values)]; 
             if (uniqueValues.length < 2) { 
@@ -273,28 +386,53 @@
             uniqueValues.forEach((value, index) => { config.categoricalMap[value] = palette[index % palette.length]; }); 
         } 
         
+        // --- MODIFICADO --- Función de estilo dinámico
         const getDynamicStyle = function(feature) { 
             const currentConfig = this.options.config; 
+            const value = feature.properties[currentConfig.activeVariable];
+            const grades = currentConfig.numericStats[currentConfig.activeVariable]?.grades || [];
+
             if (currentConfig.displayMode === 'classified') { 
-                const value = feature.properties[currentConfig.activeVariable]; 
-                const grades = currentConfig.numericStats[currentConfig.activeVariable].grades; 
-                return { fillColor: getColor(value, grades, currentConfig.activePalette), weight: 1, opacity: 1, color: 'white', fillOpacity: 0.8 }; 
+                return { 
+                    fillColor: getColor(value, grades, currentConfig.activePalette), 
+                    weight: 1, 
+                    opacity: 1, 
+                    color: 'white', 
+                    fillOpacity: currentConfig.globalOpacity // --- MODIFICADO ---
+                }; 
             } 
             if (currentConfig.displayMode === 'categorical') { 
-                const value = feature.properties[currentConfig.activeCategoricalVariable]; 
-                const color = currentConfig.categoricalMap[value] || '#CCCCCC'; 
-                return { fillColor: color, weight: 1, opacity: 1, color: 'white', fillOpacity: 0.8 }; 
+                const catValue = feature.properties[currentConfig.activeCategoricalVariable]; 
+                const color = currentConfig.categoricalMap[catValue] || '#CCCCCC'; 
+                return { 
+                    fillColor: color, 
+                    weight: 1, 
+                    opacity: 1, 
+                    color: 'white', 
+                    fillOpacity: currentConfig.globalOpacity // --- MODIFICADO ---
+                }; 
             } 
+            // --- NUEVO --- Modo Graduado
+            if (currentConfig.displayMode === 'graduated') {
+                return {
+                    fillColor: getColor(value, grades, currentConfig.activePalette),
+                    weight: 1,
+                    opacity: 1,
+                    color: 'white',
+                    fillOpacity: currentConfig.globalOpacity,
+                    radius: getRadius(value, grades, currentConfig.minRadius, currentConfig.maxRadius)
+                };
+            }
             return {};
         }.bind({options: {config: layer.options.config}});
 
         if (isPointLayer) {
              layer.eachLayer(function(l) {
-                if (l instanceof L.CircleMarker) {
-                    const style = getDynamicStyle(l.feature);
-                    l.setStyle({ fillColor: style.fillColor, color: style.color, fillOpacity: style.fillOpacity, radius: 8 });
-                }
-            });
+                 if (l instanceof L.CircleMarker) {
+                     const style = getDynamicStyle(l.feature);
+                     l.setStyle(style); // --- MODIFICADO --- Aplica estilo dinámico (incluye radio)
+                 }
+             });
         } else {
             layer.setStyle(getDynamicStyle); 
         }
@@ -322,6 +460,8 @@
         } 
 
         const defaultMode = numericProperties.length > 0 ? 'classified' : (stringProperties.length > 0 ? 'categorical' : 'simple'); 
+        
+        // --- MODIFICADO --- Configuración de capa
         const layerConfig = { 
             name, 
             numericProperties, 
@@ -330,14 +470,41 @@
             activeVariable: numericProperties[0] || null, 
             activeCategoricalVariable: stringProperties[0] || null, 
             numClasses: 7, 
-            activePalette: 'Blues', // Cambiado a Blues por defecto
+            activePalette: 'Blues',
             activeCategoricalPalette: 'Paired', 
             displayMode: defaultMode, 
             simpleRenderMode: 'both', 
-            simpleFillColor: '#007BFF', // Color azul primario de la nueva paleta
-            simpleOutlineColor: '#FFFFFF'
+            simpleFillColor: '#007BFF',
+            simpleOutlineColor: '#FFFFFF',
+            globalOpacity: 0.8, // --- NUEVO ---
+            minRadius: 6,       // --- NUEVO ---
+            maxRadius: 20       // --- NUEVO ---
         }; 
         
+        // --- NUEVO --- Lógica de resaltado
+        function highlightFeature(e) {
+            const layer = e.target;
+            if (layer instanceof L.CircleMarker) {
+                layer.setStyle({
+                    weight: 3,
+                    color: 'var(--highlight-color)',
+                    radius: layer.options.radius * 1.2
+                });
+            } else {
+                layer.setStyle({
+                    weight: 3,
+                    color: 'var(--highlight-color)',
+                    dashArray: ''
+                });
+            }
+            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                layer.bringToFront();
+            }
+        }
+        function resetHighlight(e) {
+            newLayer.resetStyle(e.target);
+        }
+
         const geoJSONOptions = {
             config: layerConfig,
             style: function(feature) {
@@ -345,12 +512,19 @@
             },
             pointToLayer: function (feature, latlng) {
                 return L.circleMarker(latlng, {
-                    radius: 8,
+                    radius: layerConfig.minRadius, // --- MODIFICADO ---
                     fillColor: layerConfig.simpleFillColor,
                     color: layerConfig.simpleOutlineColor,
                     weight: 1,
                     opacity: 1,
-                    fillOpacity: 0.8
+                    fillOpacity: layerConfig.globalOpacity // --- MODIFICADO ---
+                });
+            },
+            // --- NUEVO ---
+            onEachFeature: function(feature, layer) {
+                layer.on({
+                    mouseover: highlightFeature,
+                    mouseout: resetHighlight
                 });
             }
         };
@@ -361,9 +535,10 @@
         newLayer.addTo(map);
 
         newLayer.eachLayer(layer => { 
+            // --- MODIFICADO --- Estilo del popup
             let popupContent = '<table>'; 
             for (const key in layer.feature.properties) { 
-                popupContent += `<tr><td style="padding-right: 10px;"><strong>${key}</strong></td><td>${layer.feature.properties[key]}</td></tr>`; 
+                popupContent += `<tr><td><strong>${key}</strong></td><td>${layer.feature.properties[key]}</td></tr>`; 
             } 
             popupContent += '</table>'; 
             layer.bindPopup(popupContent, { maxHeight: 200, minWidth: 200 }); 
@@ -376,15 +551,251 @@
         updateVisualization(currentActiveLayer); 
         applyLayerOrder(); 
     }
+
     infoControl.onAdd = function (map) { this._div = L.DomUtil.create('div', 'info'); L.DomEvent.disableClickPropagation(this._div); L.DomEvent.on(this._div, 'click', function(e) { if (e.target.tagName === 'H4') { this._div.classList.toggle('collapsed'); } }, this); this.update(); return this._div; };
-    infoControl.update = function () { let htmlContent = '<h4>Configuración de Capas</h4>'; if (orderedLayers.length === 0) { htmlContent += '<p style="padding: 10px 0;">Cargue un archivo para empezar.</p>'; this._div.innerHTML = htmlContent; return; } htmlContent += `<label>Capas (arrastra para ordenar):</label><ul id="layer-list" class="layer-list">`; orderedLayers.forEach(layer => { const layerId = L.stamp(layer); const isActiveClass = (currentActiveLayer && layerId === L.stamp(currentActiveLayer)) ? 'active' : ''; htmlContent += `<li class="${isActiveClass}" data-layer-id="${layerId}">${layer.options.config.name}</li>`; }); htmlContent += `</ul>`; if (currentActiveLayer) { const config = currentActiveLayer.options.config; htmlContent += `<div class="config-options">`; htmlContent += `<label for="mode-selector">Modo de Visualización:</label><select id="mode-selector">`; htmlContent += `<option value="simple" ${config.displayMode === 'simple' ? 'selected' : ''}>Estilo Simple</option>`; if (config.numericProperties.length > 0) { htmlContent += `<option value="classified" ${config.displayMode === 'classified' ? 'selected' : ''}>Clasificado (Números)</option>`; } if (config.stringProperties.length > 0) { htmlContent += `<option value="categorical" ${config.displayMode === 'categorical' ? 'selected' : ''}>Por Categorías (Texto)</option>`; } htmlContent += `</select>`; if (config.displayMode === 'simple') { htmlContent += `<label for="render-mode-selector">Mostrar:</label><select id="render-mode-selector"><option value="both" ${config.simpleRenderMode === 'both' ? 'selected' : ''}>Relleno y Contorno</option><option value="fill" ${config.simpleRenderMode === 'fill' ? 'selected' : ''}>Solo Relleno</option><option value="outline" ${config.simpleRenderMode === 'outline' ? 'selected' : ''}>Solo Contorno</option></select>`; htmlContent += `<div class="color-picker-container"><label>Relleno:</label><input type="color" id="fill-color-picker" value="${config.simpleFillColor}"></div>`; htmlContent += `<div class="color-picker-container"><label>Contorno:</label><input type="color" id="outline-color-picker" value="${config.simpleOutlineColor}"></div>`; } if (config.displayMode === 'classified') { htmlContent += `<label for="variable-selector">Variable Numérica:</label><select id="variable-selector">`; config.numericProperties.forEach(prop => { htmlContent += `<option value="${prop}" ${prop === config.activeVariable ? 'selected' : ''}>${prop}</option>`; }); htmlContent += `</select>`; htmlContent += `<label for="classes-input">Clases:</label><input type="number" id="classes-input" value="${config.numClasses}" min="2" max="10">`; htmlContent += `<label for="palette-selector">Paleta:</label><select id="palette-selector">`; for (const key in sequentialPalettes) { htmlContent += `<option value="${key}" ${key === config.activePalette ? 'selected' : ''}>${key}</option>`; } htmlContent += `</select>`; } if (config.displayMode === 'categorical') { htmlContent += `<label for="categorical-variable-selector">Variable de Texto:</label><select id="categorical-variable-selector">`; config.stringProperties.forEach(prop => { htmlContent += `<option value="${prop}" ${prop === config.activeCategoricalVariable ? 'selected' : ''}>${prop}</option>`; }); htmlContent += `</select>`; htmlContent += `<label for="categorical-palette-selector">Paleta:</label><select id="categorical-palette-selector">`; for (const key in categoricalPalettes) { htmlContent += `<option value="${key}" ${key === config.activeCategoricalPalette ? 'selected' : ''}>${key}</option>`; } htmlContent += `</select>`; } htmlContent += `</div>`; } this._div.innerHTML = htmlContent; const layerListEl = this._div.querySelector('#layer-list'); if (layerListEl) { sortableInstance = new Sortable(layerListEl, { animation: 150, onEnd: (evt) => { const movedItem = orderedLayers.splice(evt.oldIndex, 1)[0]; orderedLayers.splice(evt.newIndex, 0, movedItem); applyLayerOrder(); infoControl.update(); } }); } this._div.querySelectorAll('#layer-list li').forEach(item => { item.addEventListener('click', () => { const layerId = parseInt(item.dataset.layerId, 10); currentActiveLayer = orderedLayers.find(l => L.stamp(l) === layerId); this.update(); legendControl.update(currentActiveLayer); }); }); if (currentActiveLayer) { const config = currentActiveLayer.options.config; const modeSelector = this._div.querySelector('#mode-selector'); if (modeSelector) { modeSelector.onchange = (e) => { config.displayMode = e.target.value; this.update(); updateVisualization(currentActiveLayer); }; } if (config.displayMode === 'simple') { this._div.querySelector('#render-mode-selector').onchange = (e) => { config.simpleRenderMode = e.target.value; updateVisualization(currentActiveLayer); }; this._div.querySelector('#fill-color-picker').onchange = (e) => { config.simpleFillColor = e.target.value; updateVisualization(currentActiveLayer); }; this._div.querySelector('#outline-color-picker').onchange = (e) => { config.simpleOutlineColor = e.target.value; updateVisualization(currentActiveLayer); }; } if (config.displayMode === 'classified') { this._div.querySelector('#variable-selector').onchange = (e) => { config.activeVariable = e.target.value; updateVisualization(currentActiveLayer); }; this._div.querySelector('#classes-input').onchange = (e) => { let val = parseInt(e.target.value, 10); if (val >= 2 && val <= 10) { config.numClasses = val; updateVisualization(currentActiveLayer); } else { e.target.value = config.numClasses; } }; this._div.querySelector('#palette-selector').onchange = (e) => { config.activePalette = e.target.value; updateVisualization(currentActiveLayer); }; } if (config.displayMode === 'categorical') { this._div.querySelector('#categorical-variable-selector').onchange = (e) => { config.activeCategoricalVariable = e.target.value; updateVisualization(currentActiveLayer); }; this._div.querySelector('#categorical-palette-selector').onchange = (e) => { config.activeCategoricalPalette = e.target.value; updateVisualization(currentActiveLayer); }; } } };
+    
+    // --- MODIFICADO --- Panel de configuración de capa
+    infoControl.update = function () { 
+        let htmlContent = '<h4>Configuración de Capas</h4>'; 
+        if (orderedLayers.length === 0) { 
+            htmlContent += '<p style="padding: 10px 0;">Cargue un archivo para empezar.</p>'; 
+            this._div.innerHTML = htmlContent; return; 
+        } 
+        htmlContent += `<label>Capas (arrastra para ordenar):</label><ul id="layer-list" class="layer-list">`; 
+        orderedLayers.forEach(layer => { const layerId = L.stamp(layer); const isActiveClass = (currentActiveLayer && layerId === L.stamp(currentActiveLayer)) ? 'active' : ''; htmlContent += `<li class="${isActiveClass}" data-layer-id="${layerId}">${layer.options.config.name}</li>`; }); 
+        htmlContent += `</ul>`; 
+        
+        if (currentActiveLayer) { 
+            const config = currentActiveLayer.options.config; 
+            
+            // --- NUEVO --- Botón de Zoom a Capa
+            htmlContent += `<div class="layer-controls">
+                                <button id="zoom-to-layer-btn">Zoom a la Capa</button>
+                             </div>`;
+
+            htmlContent += `<div class="config-options">`; 
+
+            // --- NUEVO --- Slider de Opacidad
+            htmlContent += `<label for="opacity-slider">Opacidad: <span id="opacity-value">${Math.round(config.globalOpacity * 100)}%</span></label>`;
+            htmlContent += `<input type="range" id="opacity-slider" min="0" max="1" step="0.05" value="${config.globalOpacity}">`;
+
+            htmlContent += `<label for="mode-selector">Modo de Visualización:</label><select id="mode-selector">`; 
+            htmlContent += `<option value="simple" ${config.displayMode === 'simple' ? 'selected' : ''}>Estilo Simple</option>`; 
+            if (config.numericProperties.length > 0) { 
+                htmlContent += `<option value="classified" ${config.displayMode === 'classified' ? 'selected' : ''}>Clasificado (Polígonos)</option>`; 
+            } 
+            // --- NUEVO --- Opción de modo Graduado
+            if (config.numericProperties.length > 0 && config.pointLayer) {
+                htmlContent += `<option value="graduated" ${config.displayMode === 'graduated' ? 'selected' : ''}>Graduado (Puntos)</option>`;
+            }
+            if (config.stringProperties.length > 0) { 
+                htmlContent += `<option value="categorical" ${config.displayMode === 'categorical' ? 'selected' : ''}>Por Categorías (Texto)</option>`; 
+            } 
+            htmlContent += `</select>`; 
+            
+            if (config.displayMode === 'simple') { 
+                htmlContent += `<label for="render-mode-selector">Mostrar:</label><select id="render-mode-selector"><option value="both" ${config.simpleRenderMode === 'both' ? 'selected' : ''}>Relleno y Contorno</option><option value="fill" ${config.simpleRenderMode === 'fill' ? 'selected' : ''}>Solo Relleno</option><option value="outline" ${config.simpleRenderMode === 'outline' ? 'selected' : ''}>Solo Contorno</option></select>`; 
+                htmlContent += `<div class="color-picker-container"><label>Relleno:</label><input type="color" id="fill-color-picker" value="${config.simpleFillColor}"></div>`; 
+                htmlContent += `<div class="color-picker-container"><label>Contorno:</label><input type="color" id="outline-color-picker" value="${config.simpleOutlineColor}"></div>`; 
+                if (config.pointLayer) {
+                     htmlContent += `<label for="radius-input">Radio:</label><input type="number" id="radius-input" value="${config.minRadius}" min="1" max="30">`;
+                }
+            } 
+            
+            if (config.displayMode === 'classified') { 
+                htmlContent += `<label for="variable-selector">Variable Numérica:</label><select id="variable-selector">`; 
+                config.numericProperties.forEach(prop => { htmlContent += `<option value="${prop}" ${prop === config.activeVariable ? 'selected' : ''}>${prop}</option>`; }); 
+                htmlContent += `</select>`; 
+                htmlContent += `<label for="classes-input">Clases:</label><input type="number" id="classes-input" value="${config.numClasses}" min="2" max="10">`; 
+                htmlContent += `<label for="palette-selector">Paleta:</label><select id="palette-selector">`; 
+                for (const key in sequentialPalettes) { htmlContent += `<option value="${key}" ${key === config.activePalette ? 'selected' : ''}>${key}</option>`; } 
+                htmlContent += `</select>`; 
+            } 
+
+            // --- NUEVO --- Opciones para modo Graduado
+            if (config.displayMode === 'graduated') {
+                htmlContent += `<label for="variable-selector">Variable Numérica:</label><select id="variable-selector">`; 
+                config.numericProperties.forEach(prop => { htmlContent += `<option value="${prop}" ${prop === config.activeVariable ? 'selected' : ''}>${prop}</option>`; }); 
+                htmlContent += `</select>`; 
+                htmlContent += `<label for="classes-input">Clases:</label><input type="number" id="classes-input" value="${config.numClasses}" min="2" max="10">`;
+                htmlContent += `<label for="palette-selector">Paleta de Color:</label><select id="palette-selector">`; 
+                for (const key in sequentialPalettes) { htmlContent += `<option value="${key}" ${key === config.activePalette ? 'selected' : ''}>${key}</option>`; } 
+                htmlContent += `</select>`; 
+                htmlContent += `<label for="min-radius-input">Radio Mínimo:</label><input type="number" id="min-radius-input" value="${config.minRadius}" min="1" max="50">`;
+                htmlContent += `<label for="max-radius-input">Radio Máximo:</label><input type="number" id="max-radius-input" value="${config.maxRadius}" min="1" max="50">`;
+            }
+            
+            if (config.displayMode === 'categorical') { 
+                htmlContent += `<label for="categorical-variable-selector">Variable de Texto:</label><select id="categorical-variable-selector">`; 
+                config.stringProperties.forEach(prop => { htmlContent += `<option value="${prop}" ${prop === config.activeCategoricalVariable ? 'selected' : ''}>${prop}</option>`; }); 
+                htmlContent += `</select>`; 
+                htmlContent += `<label for="categorical-palette-selector">Paleta:</label><select id="categorical-palette-selector">`; 
+                for (const key in categoricalPalettes) { htmlContent += `<option value="${key}" ${key === config.activeCategoricalPalette ? 'selected' : ''}>${key}</option>`; } 
+                htmlContent += `</select>`; 
+            } 
+            htmlContent += `</div>`; 
+        } 
+        
+        this._div.innerHTML = htmlContent; 
+        
+        // --- Event listeners (Movidos aquí para mejor organización) ---
+        
+        const layerListEl = this._div.querySelector('#layer-list'); 
+        if (layerListEl) { 
+            sortableInstance = new Sortable(layerListEl, { animation: 150, onEnd: (evt) => { const movedItem = orderedLayers.splice(evt.oldIndex, 1)[0]; orderedLayers.splice(evt.newIndex, 0, movedItem); applyLayerOrder(); infoControl.update(); } }); 
+        } 
+        
+        this._div.querySelectorAll('#layer-list li').forEach(item => { 
+            item.addEventListener('click', () => { 
+                const layerId = parseInt(item.dataset.layerId, 10); 
+                currentActiveLayer = orderedLayers.find(l => L.stamp(l) === layerId); 
+                this.update(); 
+                legendControl.update(currentActiveLayer); 
+            }); 
+        }); 
+
+        if (currentActiveLayer) {
+            const config = currentActiveLayer.options.config;
+            
+            // Listener para Zoom
+            const zoomBtn = this._div.querySelector('#zoom-to-layer-btn');
+            if (zoomBtn) {
+                zoomBtn.onclick = () => { 
+                    if (currentActiveLayer.getBounds && currentActiveLayer.getBounds().isValid()) {
+                        map.fitBounds(currentActiveLayer.getBounds()); 
+                    }
+                };
+            }
+
+            // Listener para Opacidad
+            const opacitySlider = this._div.querySelector('#opacity-slider');
+            const opacityValue = this._div.querySelector('#opacity-value');
+            if (opacitySlider) {
+                opacitySlider.oninput = (e) => {
+                    config.globalOpacity = parseFloat(e.target.value);
+                    if (opacityValue) {
+                        opacityValue.innerText = `${Math.round(config.globalOpacity * 100)}%`;
+                    }
+                    updateVisualization(currentActiveLayer);
+                };
+            }
+            
+            // Listener para Modo
+            const modeSelector = this._div.querySelector('#mode-selector'); 
+            if (modeSelector) { 
+                modeSelector.onchange = (e) => { config.displayMode = e.target.value; this.update(); updateVisualization(currentActiveLayer); }; 
+            } 
+
+            // Listeners para modo Simple
+            if (config.displayMode === 'simple') { 
+                const renderMode = this._div.querySelector('#render-mode-selector');
+                if (renderMode) renderMode.onchange = (e) => { config.simpleRenderMode = e.target.value; updateVisualization(currentActiveLayer); }; 
+                
+                const fillColor = this._div.querySelector('#fill-color-picker');
+                if (fillColor) fillColor.onchange = (e) => { config.simpleFillColor = e.target.value; updateVisualization(currentActiveLayer); }; 
+                
+                const outlineColor = this._div.querySelector('#outline-color-picker');
+                if (outlineColor) outlineColor.onchange = (e) => { config.simpleOutlineColor = e.target.value; updateVisualization(currentActiveLayer); }; 
+                
+                const radiusInput = this._div.querySelector('#radius-input');
+                if (radiusInput) radiusInput.onchange = (e) => { config.minRadius = parseInt(e.target.value, 10); updateVisualization(currentActiveLayer); };
+            } 
+
+            // Listeners para modo Clasificado
+            if (config.displayMode === 'classified') { 
+                const varSelector = this._div.querySelector('#variable-selector');
+                if (varSelector) varSelector.onchange = (e) => { config.activeVariable = e.target.value; updateVisualization(currentActiveLayer); }; 
+                
+                const classesInput = this._div.querySelector('#classes-input');
+                if (classesInput) classesInput.onchange = (e) => { let val = parseInt(e.target.value, 10); if (val >= 2 && val <= 10) { config.numClasses = val; updateVisualization(currentActiveLayer); } else { e.target.value = config.numClasses; } }; 
+                
+                const paletteSelector = this._div.querySelector('#palette-selector');
+                if (paletteSelector) paletteSelector.onchange = (e) => { config.activePalette = e.target.value; updateVisualization(currentActiveLayer); }; 
+            } 
+
+            // --- NUEVO --- Listeners para modo Graduado
+            if (config.displayMode === 'graduated') {
+                const varSelector = this._div.querySelector('#variable-selector');
+                if (varSelector) varSelector.onchange = (e) => { config.activeVariable = e.target.value; updateVisualization(currentActiveLayer); }; 
+                
+                const classesInput = this._div.querySelector('#classes-input');
+                if (classesInput) classesInput.onchange = (e) => { let val = parseInt(e.target.value, 10); if (val >= 2 && val <= 10) { config.numClasses = val; updateVisualization(currentActiveLayer); } else { e.target.value = config.numClasses; } }; 
+                
+                const paletteSelector = this._div.querySelector('#palette-selector');
+                if (paletteSelector) paletteSelector.onchange = (e) => { config.activePalette = e.target.value; updateVisualization(currentActiveLayer); }; 
+                
+                const minRadiusInput = this._div.querySelector('#min-radius-input');
+                if (minRadiusInput) minRadiusInput.onchange = (e) => { config.minRadius = parseInt(e.target.value, 10); updateVisualization(currentActiveLayer); };
+
+                const maxRadiusInput = this._div.querySelector('#max-radius-input');
+                if (maxRadiusInput) maxRadiusInput.onchange = (e) => { config.maxRadius = parseInt(e.target.value, 10); updateVisualization(currentActiveLayer); };
+            }
+            
+            // Listeners para modo Categórico
+            if (config.displayMode === 'categorical') { 
+                const catVarSelector = this._div.querySelector('#categorical-variable-selector');
+                if (catVarSelector) catVarSelector.onchange = (e) => { config.activeCategoricalVariable = e.target.value; updateVisualization(currentActiveLayer); }; 
+                
+                const catPaletteSelector = this._div.querySelector('#categorical-palette-selector');
+                if (catPaletteSelector) catPaletteSelector.onchange = (e) => { config.activeCategoricalPalette = e.target.value; updateVisualization(currentActiveLayer); }; 
+            } 
+        } 
+    };
     infoControl.addTo(map);
+
+    // --- MODIFICADO --- Leyenda
     legendControl.onAdd = function (map) { this._div = L.DomUtil.create('div', 'info legend'); return this._div; };
-    legendControl.update = function (layer) { let content = ""; if (layer && layer.options.config.displayMode === 'classified' && layer.options.config.numericStats[layer.options.config.activeVariable].grades?.length > 1) { const config = layer.options.config; const grades = config.numericStats[config.activeVariable].grades; const palette = sequentialPalettes[config.activePalette]; let labels = ['<h4>' + config.activeVariable + '</h4>']; for (let i = 0; i < grades.length - 1; i++) { if (palette[i]) { labels.push(`<i style="background:${palette[i]}"></i> ${grades[i].toLocaleString(undefined, {maximumFractionDigits: 2})} &ndash; ${grades[i+1].toLocaleString(undefined, {maximumFractionDigits: 2})}`); } } content = labels.join('<br>'); } else if (layer && layer.options.config.displayMode === 'categorical' && layer.options.config.categoricalMap) { const config = layer.options.config; let labels = ['<h4>' + config.activeCategoricalVariable + '</h4>']; for (const value in config.categoricalMap) { labels.push(`<i style="background:${config.categoricalMap[value]}"></i> ${value}`); } content = labels.join('<br>'); } this._div.innerHTML = content; };
+    legendControl.update = function (layer) { 
+        let content = ""; 
+        if (!layer) {
+             this._div.innerHTML = content;
+             return;
+        }
+
+        const config = layer.options.config;
+        const grades = config.numericStats[config.activeVariable]?.grades || [];
+
+        // --- MODIFICADO --- Lógica de leyenda para Clasificado y Graduado
+        if ((config.displayMode === 'classified' || config.displayMode === 'graduated') && grades.length > 1) { 
+            const palette = sequentialPalettes[config.activePalette]; 
+            let labels = ['<h4>' + config.activeVariable + '</h4>'];
+            const isPoint = config.pointLayer;
+            const isGraduated = isPoint && config.displayMode === 'graduated';
+
+            for (let i = 0; i < grades.length - 1; i++) { 
+                if (palette[i]) { 
+                    let style = `background:${palette[i]}`;
+                    if (isGraduated) {
+                        // Escala el radio del ícono de la leyenda
+                        const radius = config.minRadius + (i / (grades.length - 2)) * (config.maxRadius - config.minRadius);
+                        style += `; width: ${radius*2}px; height: ${radius*2}px; border-radius: 50%;`;
+                    } else if (isPoint) {
+                        style += `; border-radius: 50%;`; // Círculos para clasificado de puntos
+                    }
+                    labels.push(`<i style="${style}"></i> ${grades[i].toLocaleString(undefined, {maximumFractionDigits: 2})} &ndash; ${grades[i+1].toLocaleString(undefined, {maximumFractionDigits: 2})}`); 
+                } 
+            } 
+            content = labels.join('<br>'); 
+        } else if (layer && config.displayMode === 'categorical' && config.categoricalMap) { 
+            let labels = ['<h4>' + config.activeCategoricalVariable + '</h4>']; 
+            for (const value in config.categoricalMap) { 
+                let style = `background:${config.categoricalMap[value]}`;
+                if (config.pointLayer) {
+                     style += `; border-radius: 50%;`; // Círculos para categórico de puntos
+                }
+                labels.push(`<i style="${style}"></i> ${value}`); 
+            } 
+            content = labels.join('<br>'); 
+        } 
+        this._div.innerHTML = content; 
+    };
     legendControl.addTo(map);
+    
     function applyLayerOrder() { orderedLayers.forEach(layer => layer.bringToFront()); }
+    
     map.on('overlayadd', e => { const index = orderedLayers.findIndex(l => L.stamp(l) === L.stamp(e.layer)); if (index === -1) { orderedLayers.unshift(e.layer); } if (!currentActiveLayer) { currentActiveLayer = e.layer; } applyLayerOrder(); infoControl.update(); legendControl.update(currentActiveLayer); });
     map.on('overlayremove', e => { const layerIdToRemove = L.stamp(e.layer); orderedLayers = orderedLayers.filter(layer => L.stamp(layer) !== layerIdToRemove); if (e.layer === currentActiveLayer) { currentActiveLayer = orderedLayers.length > 0 ? orderedLayers[0] : null; } infoControl.update(); legendControl.update(currentActiveLayer); });
+    
     function handleUploadedFile(file) {
         if (!file) return;
         const extension = file.name.split('.').pop().toLowerCase();
@@ -430,10 +841,13 @@
         }
     }
     
+    // --- MODIFICADO --- Botón de Carga con Ícono SVG
     L.Control.Custom = L.Control.extend({
         onAdd: function(map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control custom-control');
-            container.innerText = 'Cargar Archivo(s)';
+            // Ícono SVG de carga
+            container.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Cargar Archivo</title><path d="M19.35,10.04C18.67,6.59 15.64,4 12,4C9.11,4 6.6,5.64 5.35,8.04C2.34,8.36 0,10.91 0,14A6,6 0 0,0 6,20H19A5,5 0 0,0 24,15C24,12.36 21.95,10.22 19.35,10.04M19,18H6A4,4 0 0,1 2,14C2,11.95 3.53,10.24 5.56,10.03L6.63,9.92L7.13,8.97C8.08,7.14 9.94,6 12,6C14.62,6 16.88,7.86 17.39,10.43L17.69,11.93L19.22,12.04C20.78,12.14 22,13.45 22,15A3,3 0 0,1 19,18M8,13H10.55V17H13.45V13H16L12,9L8,13Z" /></svg>';
+            container.title = 'Cargar Archivo(s)';
             
             const fileInput = L.DomUtil.create('input');
             fileInput.type = 'file';
@@ -483,16 +897,20 @@
         });
     }
 
+    // --- MODIFICADO --- Botón de Exportar con Ícono SVG
     L.Control.Export = L.Control.extend({
         onAdd: function(map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control custom-control');
-            container.innerText = 'Exportar Imagen';
+            // Ícono SVG de exportar/descargar
+            container.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Exportar Imagen</title><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" /></svg>';
+            container.title = 'Exportar Imagen';
             L.DomEvent.on(container, 'click', function(e) { L.DomEvent.stopPropagation(e); exportMap(); });
             return container;
         }
     });
     new L.Control.Export({ position: 'topleft' }).addTo(map);
 
+    // --- SECCIÓN DE DIBUJO (sin cambios) ---
     const drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
