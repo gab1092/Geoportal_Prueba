@@ -291,7 +291,7 @@
     const map = L.map('map', { attributionControl: false, preferCanvas: true }).setView([24.5, -99.5], 5);
     
     const infoControl = L.control();
-    const legendControl = L.control({position: 'bottomright'});
+    const legendControl = L.control({position: 'bottomleft'});
     let currentActiveLayer = null;
     let orderedLayers = [];
     let sortableInstance = null;
