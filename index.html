@@ -15,8 +15,6 @@
     <script src="https://unpkg.com/simple-statistics@7.8.3/dist/simple-statistics.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.simplegraticule/L.SimpleGraticule.css" />
-    <script src="https://unpkg.com/leaflet.simplegraticule/L.SimpleGraticule.js"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -878,44 +876,10 @@
     new L.Control.Custom({ position: 'topleft' }).addTo(map);
 
 function exportMap() {
-    const controlsToHide = document.querySelectorAll(
-        '.leaflet-control-container > .leaflet-top, ' +
-        '.leaflet-control-container > .leaflet-bottom-right, ' + // Oculta atribuciones estándar si estuvieran a la derecha
-        '.info.leaflet-control:not(.legend), ' + // Oculta el panel de info, pero NO la leyenda
-        '.custom-attribution' // Oculta la atribución personalizada
-    );
-    controlsToHide.forEach(el => el.classList.add('hide-for-export'));
-    const graticule = L.simpleGraticule({
-        interval: 20, // Intervalo de líneas (en píxeles, ajusta según necesites)
-        showOriginLabel: true,
-        redraw: 'moveend',
-        zoomIntervals: [ // Puedes definir intervalos y estilos por nivel de zoom
-          {start: 0, end: 3, interval: 300},
-          {start: 4, end: 5, interval: 100},
-          {start: 6, end: 7, interval: 50},
-          {start: 8, end: 10, interval: 20},
-          {start: 11, end: 20, interval: 10}
-        ]
-    }).addTo(map);
-
-        // Añadimos una clase temporal al cuerpo para asegurar que html2canvas capture todo bien
-        document.body.classList.add('capturing-map');
-
-        leafletImage(map, function(err, canvas) {
-            controlsToHide.forEach(el => el.classList.remove('hide-for-export'));
-            document.body.classList.remove('capturing-map'); // Quitamos la clase temporal
-
-            if (err) {
-                console.error("Error al exportar el mapa con leaflet-image:", err);
-                alert("Hubo un error al exportar el mapa. Por favor, inténtelo de nuevo.");
-            } else {
-                const link = document.createElement('a');
-                link.download = 'mapa_exportado.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            }
-        });
-    }
+        const controlsToHide = document.querySelectorAll(
+            '.leaflet-control-container > .leaflet-top, ' +  // Oculta controles superiores (zoom, botones personalizados, etc.)
+            '.info.leaflet-control:not(.legend), ' + // Oculta el panel de info, pero NO si también tiene la clase 'legend'
+        );
         controlsToHide.forEach(el => el.classList.add('hide-for-export'));
 
         // Añadimos una clase temporal al cuerpo para asegurar que html2canvas capture todo bien
