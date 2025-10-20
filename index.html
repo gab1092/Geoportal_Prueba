@@ -878,7 +878,7 @@
 function exportMap() {
         const controlsToHide = document.querySelectorAll(
             '.leaflet-control-container > .leaflet-top, ' +  // Oculta controles superiores (zoom, botones personalizados, etc.)
-            '.info.leaflet-control:not(.legend), ' + // Oculta el panel de info, pero NO si también tiene la clase 'legend'
+            '.info.leaflet-control:not(.legend), '  // Oculta el panel de info, pero NO si también tiene la clase 'legend'
         );
         controlsToHide.forEach(el => el.classList.add('hide-for-export'));
 
